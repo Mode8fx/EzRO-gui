@@ -6,6 +6,12 @@ from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
 import pygubu.widgets.simpletooltip as tooltip
+try:
+    import Tkinter as tk
+    from Tkinter.messagebox import showinfo, showerror
+except:
+    import tkinter as tk
+    from tkinter.messagebox import showinfo, showerror
 
 from os import path, mkdir, listdir, remove, walk, rename, rmdir
 import re
@@ -26,6 +32,7 @@ sys.path.append(progFolder)
 crcHasher = FileHash('crc32')
 
 defaultSettingsFile = path.join(progFolder, "settings.ini")
+regionsFile = path.join(progFolder, "regions.ini")
 
 systemListStr = " ".join([
     "\"\"",
@@ -41,6 +48,17 @@ PROJECT_UI = PROJECT_PATH / "EzRO.ui"
 
 class EzroApp:
     def __init__(self, master=None):
+
+        # Menu Bar
+        menubar = tk.Menu(root, tearoff=0)
+        fileMenu = tk.Menu(menubar, tearoff=0)
+        helpMenu = tk.Menu(menubar, tearoff=0)
+        helpMenu.add_command(label="View Help...", command=self.menu_viewHelp)
+        helpMenu.add_separator()
+        helpMenu.add_command(label="About...", command=self.menu_viewAbout)
+        menubar.add_cascade(label="Help", menu=helpMenu)
+        root.config(menu=menubar)
+
         # build ui
         self.Main_Notebook = ttk.Notebook(master)
         self.Export_Frame = ttk.Frame(self.Main_Notebook)
@@ -54,7 +72,7 @@ class EzroApp:
         self.Export_System_Button.configure(command=self.export_addSystem)
         self.Export_Systems = ttk.Notebook(self.Export_Frame)
 
-        self.initExportVars()
+        self.initVars()
 
         self.Export_Systems.configure(height='200', width='200')
         self.Export_Systems.place(anchor='nw', relheight='.7', relwidth='.9', relx='.05', rely='.15', x='0', y='0')
@@ -178,47 +196,23 @@ class EzroApp:
         self.Config_Default_Frame.pack(side='top')
         self.Config_Notebook.add(self.Config_Default_Frame, text='Default Settings')
         self.Config_Region_Frame = ScrolledFrame(self.Config_Notebook, scrolltype='vertical')
-        self.Config_Region_Choice_RemoveButton_ = ttk.Button(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_RemoveButton_.configure(text='X', width='2')
-        self.Config_Region_Choice_RemoveButton_.grid(column='0', padx='20', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Name_Label_ = ttk.Label(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Name_Label_.configure(text='Region Group')
-        self.Config_Region_Choice_Name_Label_.grid(column='0', padx='70', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Name_Entry_ = ttk.Entry(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Name_Entry_.grid(column='0', padx='200', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Type_Label_ = ttk.Label(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Type_Label_.configure(text='Priority Type')
-        self.Config_Region_Choice_Type_Label_.grid(column='0', padx='370', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Type_Combobox_ = ttk.Combobox(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Type_Combobox_.configure(state='readonly', values='"Primary" "Secondary"', width='12')
-        self.Config_Region_Choice_Type_Combobox_.grid(column='0', padx='445', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Type_Combobox_.bind('<<ComboboxSelected>>', self.settings_region_setPriorityType, add='')
-        self.Config_Region_Choice_Level_Label_ = ttk.Label(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Level_Label_.configure(text='Priority Level')
-        self.Config_Region_Choice_Level_Label_.grid(column='0', padx='570', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Level_Combobox_ = ttk.Combobox(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Level_Combobox_.configure(state='readonly', values='"1 (low)" 2 3 4 5 6 7 8 9 "10 (high)"', width='9')
-        self.Config_Region_Choice_Level_Combobox_.grid(column='0', padx='650', pady='10', row='0', sticky='w')
-        self.Config_Region_Choice_Tags_Label_ = ttk.Label(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Tags_Label_.configure(text='Region/Language Tags')
-        self.Config_Region_Choice_Tags_Label_.grid(column='0', padx='70', pady='10', row='1', sticky='w')
-        self.Config_Region_Choice_Tags_Entry_ = ttk.Entry(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Tags_Entry_.configure(width='45')
-        self.Config_Region_Choice_Tags_Entry_.grid(column='0', padx='200', pady='10', row='1', sticky='w')
         self.Config_Region_Choice_RemoveButton_Tertiary = ttk.Button(self.Config_Region_Frame.innerframe)
         self.Config_Region_Choice_RemoveButton_Tertiary.configure(state='disabled', text='X', width='2')
         self.Config_Region_Choice_RemoveButton_Tertiary.grid(column='0', padx='20', pady='10', row='98', sticky='w')
         self.Config_Region_Choice_Name_Label_Tertiary = ttk.Label(self.Config_Region_Frame.innerframe)
         self.Config_Region_Choice_Name_Label_Tertiary.configure(text='Region Group')
-        self.Config_Region_Choice_Name_Label_Tertiary.grid(column='0', padx='70', pady='10', row='98', sticky='w')
+        self.Config_Region_Choice_Name_Label_Tertiary.grid(column='0', padx='130', pady='10', row='98', sticky='w')
         self.Config_Region_Choice_Name_Entry_Tertiary = ttk.Entry(self.Config_Region_Frame.innerframe)
-        self.Config_Region_Choice_Name_Entry_Tertiary.grid(column='0', padx='200', pady='10', row='98', sticky='w')
+        self.regionGroupTertiary = tk.StringVar(value='')
+        self.Config_Region_Choice_Name_Entry_Tertiary.configure(textvariable=self.regionGroupTertiary)
+        self.Config_Region_Choice_Name_Entry_Tertiary.grid(column='0', padx='220', pady='10', row='98', sticky='w')
         self.Config_Region_Choice_Type_Label_Tertiary = ttk.Label(self.Config_Region_Frame.innerframe)
         self.Config_Region_Choice_Type_Label_Tertiary.configure(text='Priority Type')
-        self.Config_Region_Choice_Type_Label_Tertiary.grid(column='0', padx='370', pady='10', row='98', sticky='w')
+        self.Config_Region_Choice_Type_Label_Tertiary.grid(column='0', padx='380', pady='10', row='98', sticky='w')
         self.Config_Region_Choice_Type_Combobox_Tertiary = ttk.Combobox(self.Config_Region_Frame.innerframe)
         self.Config_Region_Choice_Type_Combobox_Tertiary.configure(state='disabled', values='"Tertiary"', width='12')
-        self.Config_Region_Choice_Type_Combobox_Tertiary.grid(column='0', padx='445', pady='10', row='98', sticky='w')
+        self.Config_Region_Choice_Type_Combobox_Tertiary.grid(column='0', padx='465', pady='10', row='98', sticky='w')
+        self.Config_Region_Choice_Type_Combobox_Tertiary.current(0)
         self.Config_Region_AddNewRegionCategory = ttk.Button(self.Config_Region_Frame.innerframe)
         self.Config_Region_AddNewRegionCategory.configure(text='+ Add New Region Category')
         self.Config_Region_AddNewRegionCategory.grid(column='0', padx='20', pady='10', row='99', sticky='w')
@@ -227,7 +221,15 @@ class EzroApp:
         self.Config_Region_Help.configure(text='?', width='2')
         self.Config_Region_Help.grid(column='0', padx='200', pady='10', row='99', sticky='w')
         self.Config_Region_Help.configure(command=self.settings_region_help)
-        self.Config_Region_Frame.configure(usemousewheel=False)
+        self.Config_Region_Template_Combobox = ttk.Combobox(self.Config_Region_Frame.innerframe)
+        self.templateChoice = tk.StringVar(value='')
+        self.Config_Region_Template_Combobox.configure(state='readonly', textvariable=self.templateChoice, values='"" "English" "English + Secondary" "English (USA Focus)" "English (Europe Focus)" "Japanese" "Japanese + Secondary"')
+        self.Config_Region_Template_Combobox.place(anchor='e', x='965', y='495')
+        self.Config_Region_Template_Apply = ttk.Button(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Template_Apply.configure(text='Apply Template')
+        self.Config_Region_Template_Apply.place(anchor='e', x='1070', y='495')
+        self.Config_Region_Template_Apply.configure(command=self.config_region_applyTemplate)
+        self.Config_Region_Frame.configure(usemousewheel=True)
         self.Config_Region_Frame.pack(side='top')
         self.Config_Notebook.add(self.Config_Region_Frame, text='Region Settings')
         self.Config_Notebook.configure(height='200', width='200')
@@ -253,11 +255,13 @@ class EzroApp:
         # Other initialization
         if not path.exists(defaultSettingsFile):
             self.createDefaultSettings()
+        if not path.exists(regionsFile):
+            self.createRegionSettings()
     
     def run(self):
         self.mainwindow.mainloop()
 
-    def initExportVars(self):
+    def initVars(self):
         self.exportTabNum = 0
         self.Export_ScrolledFrame_ = []
         self.Export_DAT_Label_ = []
@@ -322,175 +326,190 @@ class EzroApp:
         self.Export_SortByPrimaryRegion_Tooltip_ = []
         self.Export_PrimaryRegionInRoot_Tooltip_ = []
         self.Export_OverwriteDuplicates_Tooltip_ = []
+        self.Export_RemoveSystem_ = []
+
+        self.regionNum = 0
+        self.Config_Region_Choice_RemoveButton_ = []
+        self.Config_Region_Choice_UpButton_ = []
+        self.Config_Region_Choice_DownButton_ = []
+        self.Config_Region_Choice_Name_Label_ = []
+        self.Config_Region_Choice_Name_Entry_ = []
+        self.regionGroupNames = []
+        self.Config_Region_Choice_Type_Label_ = []
+        self.Config_Region_Choice_Type_Combobox_ = []
+        self.priorityTypes = []
+        self.Config_Region_Choice_Tags_Label_ = []
+        self.Config_Region_Choice_Tags_Entry_ = []
+        self.regionTags = []
 
     def addSystemTab(self, systemName="New System"):
         self.Export_ScrolledFrame_.append(None)
-        self.Export_ScrolledFrame_[self.exportTabNum] = ScrolledFrame(self.Export_Systems, scrolltype='both')
         self.Export_DAT_Label_.append(None)
+        self.Export_DAT_PathChooser_.append(None)
+        self.datFilePathChoices.append(None)
+        self.Export_Romset_Label_.append(None)
+        self.Export_Romset_PathChooser_.append(None)
+        self.romsetFolderPathChoices.append(None)
+        self.Export_OutputDir_Label_.append(None)
+        self.Export_OutputDir_PathChooser_.append(None)
+        self.outputFolderDirectoryChoices.append(None)
+        self.Export_Separator_.append(None)
+        self.Export_OutputType_Label_.append(None)
+        self.Export_OutputType_Combobox_.append(None)
+        self.outputTypeChoices.append(None)
+        self.Export_1G1RRegion_Label_.append(None)
+        self.Export_1G1RRegion_Combobox_.append(None)
+        self.regionChoices.append(None)
+        self.Export_1G1RIncludeOther_.append(None)
+        self.includeOtherRegionsChoices.append(None)
+        self.Export_FromList_Label_.append(None)
+        self.Export_FromList_PathChooser_.append(None)
+        self.romListFileChoices.append(None)
+        self.Export_IncludeFrame_.append(None)
+        self.Export_IncludeUnlicensed_.append(None)
+        self.includeUnlicensedChoices.append(None)
+        self.Export_IncludeCompilations_.append(None)
+        self.includeCompilationsChoices.append(None)
+        self.Export_IncludeTestPrograms_.append(None)
+        self.includeTestProgramsChoices.append(None)
+        self.Export_IncludeBIOS_.append(None)
+        self.includeBIOSChoices.append(None)
+        self.Export_IncludeNES_.append(None)
+        self.includeNESChoices.append(None)
+        self.Export_IncludeGBAV_.append(None)
+        self.includeGBAVChoices.append(None)
+        self.Export_ExtractArchives_.append(None)
+        self.extractArchivesChoices.append(None)
+        self.Export_ParentFolder_.append(None)
+        self.parentFolderChoices.append(None)
+        self.Export_SortByPrimaryRegion_.append(None)
+        self.sortByPrimaryRegionChoices.append(None)
+        self.Export_PrimaryRegionInRoot_.append(None)
+        self.primaryRegionInRootChoices.append(None)
+        self.Export_OverwriteDuplicates_.append(None)
+        self.overwriteDuplicatesChoices.append(None)
+        self.Export_RemoveSystem_.append(None)
+        self.Export_ScrolledFrame_[self.exportTabNum] = ScrolledFrame(self.Export_Systems, scrolltype='both')
         self.Export_DAT_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_DAT_Label_[self.exportTabNum].configure(text='Input No-Intro DAT')
         self.Export_DAT_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
-        tooltip.create(self.Export_DAT_Label_[self.exportTabNum], 'The No-Intro DAT file for the current system. This contains information about each rom, which is used in both exporting and auditing.\n\nNot needed for the \"Favorites\" output type.')
-        self.Export_DAT_PathChooser_.append(None)
         self.Export_DAT_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.datFilePathChoices.append(None)
         self.datFilePathChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file')
         self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='0', sticky='w')
-        self.Export_Romset_Label_.append(None)
         self.Export_Romset_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_Romset_Label_[self.exportTabNum].configure(text='Input Romset')
         self.Export_Romset_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
-        tooltip.create(self.Export_Romset_Label_[self.exportTabNum], 'The directory containing your roms for the current system.')
-        self.Export_Romset_PathChooser_.append(None)
         self.Export_Romset_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.romsetFolderPathChoices.append(None)
         self.romsetFolderPathChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_Romset_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romsetFolderPathChoices[self.exportTabNum], type='directory')
         self.Export_Romset_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='1', sticky='w')
-        self.Export_OutputDir_Label_.append(None)
         self.Export_OutputDir_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_OutputDir_Label_[self.exportTabNum].configure(text='Output Directory')
         self.Export_OutputDir_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
-        tooltip.create(self.Export_OutputDir_Label_[self.exportTabNum], 'The directory that your roms will be exported to. Ideally, this should be named after the current system.')
-        self.Export_OutputDir_PathChooser_.append(None)
         self.Export_OutputDir_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.outputFolderDirectoryChoices.append(None)
         self.outputFolderDirectoryChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_OutputDir_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.outputFolderDirectoryChoices[self.exportTabNum], type='directory')
         self.Export_OutputDir_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='2', sticky='w')
-        self.Export_Separator_.append(None)
         self.Export_Separator_[self.exportTabNum] = ttk.Separator(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_Separator_[self.exportTabNum].configure(orient='vertical')
         self.Export_Separator_[self.exportTabNum].place(anchor='center', relheight='.95', relx='.5', rely='.5', x='0', y='0')
-        self.Export_OutputType_Label_.append(None)
         self.Export_OutputType_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_OutputType_Label_[self.exportTabNum].configure(text='Output Type')
         self.Export_OutputType_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='3', sticky='w')
-        tooltip.create(self.Export_OutputType_Label_[self.exportTabNum], '\"All\": All roms will be exported.\n\n\"1G1R\" (1 Game 1 Rom): Only the latest revision of a single region of your choice of each game will be exported (e.g. USA Revision 2).\n\n\"Favorites\": Only specific roms from a provided text file will be exported; good for exporting a list of only your favorite roms.')
-        self.Export_OutputType_Combobox_.append(None)
         self.Export_OutputType_Combobox_[self.exportTabNum] = ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.outputTypeChoices.append(None)
         self.outputTypeChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_OutputType_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.outputTypeChoices[self.exportTabNum], values='"All" "1G1R" "Favorites"', width='10')
         self.Export_OutputType_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='3', sticky='w')
         self.Export_OutputType_Combobox_[self.exportTabNum].bind('<<ComboboxSelected>>', self.export_setOutputType, add='')
         self.Export_OutputType_Combobox_[self.exportTabNum].current(0)
-        self.Export_1G1RRegion_Label_.append(None)
         self.Export_1G1RRegion_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_1G1RRegion_Label_[self.exportTabNum].configure(text='Primary Region')
         self.Export_1G1RRegion_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
-        tooltip.create(self.Export_1G1RRegion_Label_[self.exportTabNum], 'The region used for the 1G1R export.')
-        self.Export_1G1RRegion_Combobox_.append(None)
         self.Export_1G1RRegion_Combobox_[self.exportTabNum] = ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.regionChoices.append(None)
         self.regionChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_1G1RRegion_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.regionChoices[self.exportTabNum], values='"Placeholder 1" "Placeholder 2"', width='10')
         self.Export_1G1RRegion_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='4', sticky='w')
-        self.Export_1G1RIncludeOther_.append(None)
         self.Export_1G1RIncludeOther_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.includeOtherRegionsChoices.append(None)
         self.includeOtherRegionsChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_1G1RIncludeOther_[self.exportTabNum].configure(text='Include Games from Other Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
         self.Export_1G1RIncludeOther_[self.exportTabNum].grid(column='0', padx='250', pady='10', row='4', sticky='w')
-        tooltip.create(self.Export_1G1RIncludeOther_[self.exportTabNum], 'If enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
-        self.Export_FromList_Label_.append(None)
         self.Export_FromList_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_FromList_Label_[self.exportTabNum].configure(text='Rom List')
         self.Export_FromList_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='5', sticky='w')
-        tooltip.create(self.Export_FromList_Label_[self.exportTabNum], 'The text list containing your favorite roms for the current system.')
-        self.Export_FromList_PathChooser_.append(None)
         self.Export_FromList_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.romListFileChoices.append(None)
         self.romListFileChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file')
         self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='5', sticky='w')
-        self.Export_IncludeFrame_.append(None)
         self.Export_IncludeFrame_[self.exportTabNum] = ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.Export_IncludeUnlicensed_.append(None)
         self.Export_IncludeUnlicensed_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeUnlicensedChoices.append(None)
         self.includeUnlicensedChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeUnlicensed_[self.exportTabNum].configure(text='Unlicensed', variable=self.includeUnlicensedChoices[self.exportTabNum])
         self.Export_IncludeUnlicensed_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
-        self.Export_IncludeCompilations_.append(None)
         self.Export_IncludeCompilations_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeCompilationsChoices.append(None)
         self.includeCompilationsChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeCompilations_[self.exportTabNum].configure(text='Compilations', variable=self.includeCompilationsChoices[self.exportTabNum])
         self.Export_IncludeCompilations_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='0', sticky='w')
-        self.Export_IncludeTestPrograms_.append(None)
         self.Export_IncludeTestPrograms_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeTestProgramsChoices.append(None)
         self.includeTestProgramsChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeTestPrograms_[self.exportTabNum].configure(text='Test Programs', variable=self.includeTestProgramsChoices[self.exportTabNum])
         self.Export_IncludeTestPrograms_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
-        self.Export_IncludeBIOS_.append(None)
         self.Export_IncludeBIOS_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeBIOSChoices.append(None)
         self.includeBIOSChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeBIOS_[self.exportTabNum].configure(text='BIOS', variable=self.includeBIOSChoices[self.exportTabNum])
         self.Export_IncludeBIOS_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='1', sticky='w')
-        self.Export_IncludeNES_.append(None)
         self.Export_IncludeNES_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeNESChoices.append(None)
         self.includeNESChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeNES_[self.exportTabNum].configure(text='NES Ports', variable=self.includeNESChoices[self.exportTabNum])
         self.Export_IncludeNES_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
-        tooltip.create(self.Export_IncludeNES_[self.exportTabNum], 'Include Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.\n\nIf unsure, leave this disabled.')
-        self.Export_IncludeGBAV_.append(None)
         self.Export_IncludeGBAV_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeGBAVChoices.append(None)
         self.includeGBAVChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_IncludeGBAV_[self.exportTabNum].configure(text='GBA Video', variable=self.includeGBAVChoices[self.exportTabNum])
         self.Export_IncludeGBAV_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='2', sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum].configure(text='Include')
         self.Export_IncludeFrame_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='6', sticky='w')
-        self.Export_ExtractArchives_.append(None)
         self.Export_ExtractArchives_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.extractArchivesChoices.append(None)
         self.extractArchivesChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_ExtractArchives_[self.exportTabNum].configure(text='Extract Archives', variable=self.extractArchivesChoices[self.exportTabNum])
         self.Export_ExtractArchives_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.03', x='0', y='0')
-        tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
-        self.Export_ParentFolder_.append(None)
         self.Export_ParentFolder_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.parentFolderChoices.append(None)
         self.parentFolderChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_ParentFolder_[self.exportTabNum].configure(text='Export Each Game to Parent Folder', variable=self.parentFolderChoices[self.exportTabNum])
         self.Export_ParentFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.132', x='0', y='0')
-        tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
         self.Export_ParentFolder_[self.exportTabNum].configure(command=self.export_toggleSortGames)
-        self.Export_SortByPrimaryRegion_.append(None)
         self.Export_SortByPrimaryRegion_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.sortByPrimaryRegionChoices.append(None)
         self.sortByPrimaryRegionChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(text='Sort Games by Primary Region', variable=self.sortByPrimaryRegionChoices[self.exportTabNum])
         self.Export_SortByPrimaryRegion_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
-        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
-        self.Export_PrimaryRegionInRoot_.append(None)
         self.Export_PrimaryRegionInRoot_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.primaryRegionInRootChoices.append(None)
         self.primaryRegionInRootChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Keep Games from Primary Region in Root', variable=self.primaryRegionInRootChoices[self.exportTabNum])
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
-        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Sort Games by Primary Region\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
-        self.Export_OverwriteDuplicates_.append(None)
         self.Export_OverwriteDuplicates_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.overwriteDuplicatesChoices.append(None)
         self.overwriteDuplicatesChoices[self.exportTabNum] = tk.IntVar(value='')
         self.Export_OverwriteDuplicates_[self.exportTabNum].configure(text='Overwrite Duplicate Files', variable=self.overwriteDuplicatesChoices[self.exportTabNum])
         self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
-        tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
-        self.button1 = ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.button1.configure(text='Remove System')
-        self.button1.place(anchor='se', relx='1', rely='1', x='-10', y='-10')
-        self.button1.configure(command=self.export_removeSystem)
+        self.Export_RemoveSystem_[self.exportTabNum] = ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_RemoveSystem_[self.exportTabNum].configure(text='Remove System')
+        self.Export_RemoveSystem_[self.exportTabNum].place(anchor='se', relx='1', rely='1', x='-10', y='-10')
+        self.Export_RemoveSystem_[self.exportTabNum].configure(command=self.export_removeSystem)
         self.Export_ScrolledFrame_[self.exportTabNum].innerframe.configure(relief='groove')
         self.Export_ScrolledFrame_[self.exportTabNum].configure(usemousewheel=True)
         self.Export_ScrolledFrame_[self.exportTabNum].place(anchor='nw', relheight='.9', relwidth='.9', relx='.05', rely='.05', x='0', y='0')
         self.Export_Systems.add(self.Export_ScrolledFrame_[self.exportTabNum], text=systemName)
-
+        tooltip.create(self.Export_DAT_Label_[self.exportTabNum], 'The No-Intro DAT file for the current system. This contains information about each rom, which is used in both exporting and auditing.\n\nNot needed for the \"Favorites\" output type.')
+        tooltip.create(self.Export_Romset_Label_[self.exportTabNum], 'The directory containing your roms for the current system.')
+        tooltip.create(self.Export_OutputDir_Label_[self.exportTabNum], 'The directory that your roms will be exported to. Ideally, this should be named after the current system.')
+        tooltip.create(self.Export_OutputType_Label_[self.exportTabNum], '\"All\": All roms will be exported.\n\n\"1G1R\" (1 Game 1 Rom): Only the latest revision of a single region of your choice of each game will be exported (e.g. USA Revision 2).\n\n\"Favorites\": Only specific roms from a provided text file will be exported; good for exporting a list of only your favorite roms.')
+        tooltip.create(self.Export_1G1RRegion_Label_[self.exportTabNum], 'The region used for the 1G1R export.')
+        tooltip.create(self.Export_1G1RIncludeOther_[self.exportTabNum], 'If enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
+        tooltip.create(self.Export_FromList_Label_[self.exportTabNum], 'The text list containing your favorite roms for the current system.')
+        tooltip.create(self.Export_IncludeNES_[self.exportTabNum], 'Include Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.\n\nIf unsure, leave this disabled.')
+        tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
+        tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
+        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Sort Games by Primary Region\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
         self.export_setOutputType()
         if systemName != "Game Boy Advance":
             self.Export_IncludeNES_[self.exportTabNum].grid_remove()
@@ -545,7 +564,10 @@ class EzroApp:
         pass
 
     def export_auditHelp(self):
-        pass
+        showinfo("Audit Help",
+            "\"Auditing\" a system directory updates the file names of misnamed roms (and the ZIP files containing them, if applicable) to match the rom's entry in the system's No-Intro DAT. This is determined by the rom's matching checksum in the DAT, so the original name doesn't matter."
+            +"\n\nThis also creates a log file indicating which roms exist in the romset, which roms are missing, and which roms are in the set that don't match anything from the DAT."
+            +"\n\nIt is highly recommended that you audit a system directory whenever you update that system's No-Intro DAT.")
 
     def favorites_loadList(self):
         pass
@@ -556,17 +578,214 @@ class EzroApp:
     def favorites_saveList(self):
         pass
 
+    def addRegionGroup(self, groupName="", groupType="", groupTags=""):
+        self.Config_Region_Choice_RemoveButton_.append(None)
+        self.Config_Region_Choice_UpButton_.append(None)
+        self.Config_Region_Choice_DownButton_.append(None)
+        self.Config_Region_Choice_Name_Label_.append(None)
+        self.Config_Region_Choice_Name_Entry_.append(None)
+        self.regionGroupNames.append(None)
+        self.Config_Region_Choice_Name_Entry_.append(None)
+        self.Config_Region_Choice_Type_Label_.append(None)
+        self.Config_Region_Choice_Type_Combobox_.append(None)
+        self.priorityTypes.append(None)
+        self.Config_Region_Choice_Type_Combobox_.append(None)
+        self.Config_Region_Choice_Tags_Label_.append(None)
+        self.Config_Region_Choice_Tags_Entry_.append(None)
+        self.regionTags.append(None)
+        self.Config_Region_Choice_Tags_Entry_.append(None)
+        self.Config_Region_Choice_RemoveButton_[self.regionNum] = ttk.Button(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_RemoveButton_[self.regionNum].configure(text='X', width='2')
+        self.Config_Region_Choice_RemoveButton_[self.regionNum].grid(column='0', padx='20', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_RemoveButton_[self.regionNum].configure(command=lambda n=self.regionNum: self.removeRegionGroup(n))
+        self.Config_Region_Choice_UpButton_[self.regionNum] = ttk.Button(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_UpButton_[self.regionNum].configure(text='↑', width='2')
+        self.Config_Region_Choice_UpButton_[self.regionNum].grid(column='0', padx='50', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_UpButton_[self.regionNum].configure(command=lambda n=self.regionNum: self.moveRegionGroupUp(n))
+        self.Config_Region_Choice_DownButton_[self.regionNum] = ttk.Button(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_DownButton_[self.regionNum].configure(text='↓', width='2')
+        self.Config_Region_Choice_DownButton_[self.regionNum].grid(column='0', padx='80', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_DownButton_[self.regionNum].configure(command=lambda n=self.regionNum: self.moveRegionGroupDown(n))
+        self.Config_Region_Choice_Name_Label_[self.regionNum] = ttk.Label(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_Name_Label_[self.regionNum].configure(text='Region Group')
+        self.Config_Region_Choice_Name_Label_[self.regionNum].grid(column='0', padx='130', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_Name_Entry_[self.regionNum] = ttk.Entry(self.Config_Region_Frame.innerframe)
+        self.regionGroupNames[self.regionNum] = tk.StringVar(value=groupName)
+        self.Config_Region_Choice_Name_Entry_[self.regionNum].configure(textvariable=self.regionGroupNames[self.regionNum])
+        self.Config_Region_Choice_Name_Entry_[self.regionNum].grid(column='0', padx='220', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_Type_Label_[self.regionNum] = ttk.Label(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_Type_Label_[self.regionNum].configure(text='Priority Type')
+        self.Config_Region_Choice_Type_Label_[self.regionNum].grid(column='0', padx='380', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_Type_Combobox_[self.regionNum] = ttk.Combobox(self.Config_Region_Frame.innerframe)
+        self.priorityTypes[self.regionNum] = tk.StringVar(value=groupType)
+        self.Config_Region_Choice_Type_Combobox_[self.regionNum].configure(state='readonly', textvariable=self.priorityTypes[self.regionNum], values='"Primary" "Secondary"', width='12')
+        self.Config_Region_Choice_Type_Combobox_[self.regionNum].grid(column='0', padx='465', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_Type_Combobox_[self.regionNum].bind('<<ComboboxSelected>>', self.settings_region_setPriorityType, add='')
+        if groupType == "Secondary":
+            self.Config_Region_Choice_Type_Combobox_[self.regionNum].current(1)
+        else:
+            self.Config_Region_Choice_Type_Combobox_[self.regionNum].current(0)
+        self.Config_Region_Choice_Tags_Label_[self.regionNum] = ttk.Label(self.Config_Region_Frame.innerframe)
+        self.Config_Region_Choice_Tags_Label_[self.regionNum].configure(text='Region/Language Tags')
+        self.Config_Region_Choice_Tags_Label_[self.regionNum].grid(column='0', padx='580', pady='10', row=self.regionNum, sticky='w')
+        self.Config_Region_Choice_Tags_Entry_[self.regionNum] = ttk.Entry(self.Config_Region_Frame.innerframe)
+        self.regionTags[self.regionNum] = tk.StringVar(value=groupTags)
+        self.Config_Region_Choice_Tags_Entry_[self.regionNum].configure(textvariable=self.regionTags[self.regionNum], width='45')
+        self.Config_Region_Choice_Tags_Entry_[self.regionNum].grid(column='0', padx='720', pady='10', row=self.regionNum, sticky='w')
+
+        self.regionNum += 1
+
     def settings_region_setPriorityType(self, event=None):
         pass
 
+    def config_region_applyTemplate(self, event=None):
+        choice = self.templateChoice.get()
+        if choice != "":
+            while self.regionNum > 0:
+                self.removeRegionGroup(0)
+            if choice == "English":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="USA", groupType="Primary", groupTags="U, USA")
+                self.addRegionGroup(groupName="Europe", groupType="Primary", groupTags="E, Europe, United Kingdom")
+                self.addRegionGroup(groupName="Other (English)", groupType="Primary", groupTags="En, A, Australia, Ca, Canada")
+                self.regionGroupTertiary.set("Other (non-English)")
+            elif choice == "English + Secondary":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="USA", groupType="Primary", groupTags="U, USA")
+                self.addRegionGroup(groupName="Europe", groupType="Primary", groupTags="E, Europe, United Kingdom")
+                self.addRegionGroup(groupName="Other (English)", groupType="Primary", groupTags="En, A, Australia, Ca, Canada")
+                self.addRegionGroup(groupName="Japan", groupType="Secondary", groupTags="J, Japan, Ja")
+                self.regionGroupTertiary.set("Other (non-English)")
+            elif choice == "English (USA Focus)":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="USA", groupType="Primary", groupTags="U, USA")
+                self.addRegionGroup(groupName="Europe", groupType="Secondary", groupTags="E, Europe, United Kingdom")
+                self.addRegionGroup(groupName="Other (English)", groupType="Secondary", groupTags="En, A, Australia, Ca, Canada")
+                self.regionGroupTertiary.set("Other (non-English)")
+            elif choice == "English (Europe Focus)":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="Europe", groupType="Primary", groupTags="E, Europe, United Kingdom")
+                self.addRegionGroup(groupName="USA", groupType="Secondary", groupTags="U, USA")
+                self.addRegionGroup(groupName="Other (English)", groupType="Secondary", groupTags="En, A, Australia, Ca, Canada")
+                self.regionGroupTertiary.set("Other (non-English)")
+            elif choice == "Japanese":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="Japan", groupType="Primary", groupTags="J, Japan")
+                self.addRegionGroup(groupName="Other (Japanese)", groupType="Primary", groupTags="Ja")
+                self.regionGroupTertiary.set("Other (non-Japanese)")
+            elif choice == "Japanese + Secondary":
+                self.addRegionGroup(groupName="World", groupType="Primary", groupTags="World")
+                self.addRegionGroup(groupName="Japan", groupType="Primary", groupTags="J, Japan")
+                self.addRegionGroup(groupName="Other (Japanese)", groupType="Primary", groupTags="Ja")
+                self.addRegionGroup(groupName="USA", groupType="Secondary", groupTags="U, USA")
+                self.addRegionGroup(groupName="Europe", groupType="Secondary", groupTags="E, Europe, United Kingdom")
+                self.regionGroupTertiary.set("Other (non-Japanese)")
+
     def settings_region_addNewRegionCategory(self, event=None):
+        self.addRegionGroup()
         pass
+
+    def moveRegionGroupUp(self, num):
+        if num > 0:
+            self.Config_Region_Choice_RemoveButton_.insert(num-1, self.Config_Region_Choice_RemoveButton_.pop(num))
+            self.Config_Region_Choice_UpButton_.insert(num-1, self.Config_Region_Choice_UpButton_.pop(num))
+            self.Config_Region_Choice_DownButton_.insert(num-1, self.Config_Region_Choice_DownButton_.pop(num))
+            self.Config_Region_Choice_Name_Label_.insert(num-1, self.Config_Region_Choice_Name_Label_.pop(num))
+            self.Config_Region_Choice_Name_Entry_.insert(num-1, self.Config_Region_Choice_Name_Entry_.pop(num))
+            self.regionGroupNames.insert(num-1, self.regionGroupNames.pop(num))
+            self.Config_Region_Choice_Type_Label_.insert(num-1, self.Config_Region_Choice_Type_Label_.pop(num))
+            self.Config_Region_Choice_Type_Combobox_.insert(num-1, self.Config_Region_Choice_Type_Combobox_.pop(num))
+            self.priorityTypes.insert(num-1, self.priorityTypes.pop(num))
+            self.Config_Region_Choice_Tags_Label_.insert(num-1, self.Config_Region_Choice_Tags_Label_.pop(num))
+            self.Config_Region_Choice_Tags_Entry_.insert(num-1, self.Config_Region_Choice_Tags_Entry_.pop(num))
+            self.regionTags.insert(num-1, self.regionTags.pop(num))
+            self.refreshRegionChoicePlacement()
+
+    def moveRegionGroupDown(self, num):
+        if num < (self.regionNum - 1):
+            self.moveRegionGroupUp(num+1)
+
+    def removeRegionGroup(self, num):
+        self.Config_Region_Choice_RemoveButton_[num].grid_remove()
+        self.Config_Region_Choice_RemoveButton_.pop(num)
+        self.Config_Region_Choice_UpButton_[num].grid_remove()
+        self.Config_Region_Choice_UpButton_.pop(num)
+        self.Config_Region_Choice_DownButton_[num].grid_remove()
+        self.Config_Region_Choice_DownButton_.pop(num)
+        self.Config_Region_Choice_Name_Label_[num].grid_remove()
+        self.Config_Region_Choice_Name_Label_.pop(num)
+        self.Config_Region_Choice_Name_Entry_[num].grid_remove()
+        self.Config_Region_Choice_Name_Entry_.pop(num)
+        self.regionGroupNames.pop(num)
+        self.Config_Region_Choice_Type_Label_[num].grid_remove()
+        self.Config_Region_Choice_Type_Label_.pop(num)
+        self.Config_Region_Choice_Type_Combobox_[num].grid_remove()
+        self.Config_Region_Choice_Type_Combobox_.pop(num)
+        self.priorityTypes.pop(num)
+        self.Config_Region_Choice_Tags_Label_[num].grid_remove()
+        self.Config_Region_Choice_Tags_Label_.pop(num)
+        self.Config_Region_Choice_Tags_Entry_[num].grid_remove()
+        self.Config_Region_Choice_Tags_Entry_.pop(num)
+        self.regionTags.pop(num)
+        self.regionNum -= 1
+        self.refreshRegionChoicePlacement()
+
+    def refreshRegionChoicePlacement(self):
+        for i in range(self.regionNum):
+            self.Config_Region_Choice_RemoveButton_[i].configure(command=lambda n=i: self.removeRegionGroup(n))
+            self.Config_Region_Choice_UpButton_[i].configure(command=lambda n=i: self.moveRegionGroupUp(n))
+            self.Config_Region_Choice_DownButton_[i].configure(command=lambda n=i: self.moveRegionGroupDown(n))
+            self.Config_Region_Choice_RemoveButton_[i].grid(row=str(i))
+            self.Config_Region_Choice_UpButton_[i].grid(row=str(i))
+            self.Config_Region_Choice_DownButton_[i].grid(row=str(i))
+            self.Config_Region_Choice_Name_Label_[i].grid(row=str(i))
+            self.Config_Region_Choice_Name_Entry_[i].grid(row=str(i))
+            self.Config_Region_Choice_Type_Label_[i].grid(row=str(i))
+            self.Config_Region_Choice_Type_Combobox_[i].grid(row=str(i))
+            self.Config_Region_Choice_Tags_Label_[i].grid(row=str(i))
+            self.Config_Region_Choice_Tags_Entry_[i].grid(row=str(i))
 
     def settings_region_help(self, event=None):
-        pass
+        showInfo("Region Help", "Region settings are used in organizing roms from different regions and, in the case of 1G1R exports, determining which region of a game should be exported."
+            +"\n\nHover over each setting to learn more; or you can simply use one of the pre-made templates. I recommend \"English + Secondary\" (it's the default), but use whatever you want."
+            +"\n\nAny changes made on this page will be lost upon leaving the Config menu unless you click \"Save Changes\". This includes applying a template; remember to save!")
+
+    def createRegionSettings(self):
+        global regionSettings
+        regionSettings = configparser.ConfigParser(allow_no_value=True)
+        regionSettings.optionxform = str
+        regionSettings["1"] = {}
+        regionSettings["1"]["Region Group"] = "World"
+        regionSettings["1"]["Priority Type"] = "Primary"
+        regionSettings["1"]["Region/Language Tags"] = "World"
+        regionSettings["2"] = {}
+        regionSettings["2"]["Region Group"] = "USA"
+        regionSettings["2"]["Priority Type"] = "Primary"
+        regionSettings["2"]["Region/Language Tags"] = "U, USA"
+        regionSettings["3"] = {}
+        regionSettings["3"]["Region Group"] = "Europe"
+        regionSettings["3"]["Priority Type"] = "Primary"
+        regionSettings["3"]["Region/Language Tags"] = "E, Europe, United Kingdom"
+        regionSettings["4"] = {}
+        regionSettings["4"]["Region Group"] = "Other (English)"
+        regionSettings["4"]["Priority Type"] = "Primary"
+        regionSettings["4"]["Region/Language Tags"] = "En, A, Australia, Ca, Canada"
+        regionSettings["5"] = {}
+        regionSettings["5"]["Region Group"] = "Japan"
+        regionSettings["5"]["Priority Type"] = "Secondary"
+        regionSettings["5"]["Region/Language Tags"] = "J, Japan, Ja"
+        regionSettings["Other"] = {}
+        regionSettings["Other"]["Region Group"] = "Other (non-English)"
+        regionSettings["Other"]["Priority Type"] = "Tertiary"
+        with open(regionsFile, 'w') as rf:
+            regionSettings.write(rf)
 
     def settings_saveChanges(self):
-        global defaultSettings
+        global defaultSettings, regionSettings
+        if not path.exists(defaultSettingsFile):
+            self.createDefaultSettings()
+        if not path.exists(regionsFile):
+            self.createRegionSettings()
         defaultSettings = configparser.ConfigParser(allow_no_value=True)
         defaultSettings.optionxform = str
         defaultSettings.read(defaultSettingsFile)
@@ -588,6 +807,18 @@ class EzroApp:
         defaultSettings["Include"]["(GBA) GBA Video"] = self.ssch(self.g_includeGBAVideo)
         with open(defaultSettingsFile, 'w') as mcf:
             defaultSettings.write(mcf)
+        regionSettings = configparser.ConfigParser(allow_no_value=True)
+        regionSettings.optionxform = str
+        for i in range(self.regionNum):
+            regionSettings[str(i+1)] = {}
+            regionSettings[str(i+1)]["Region Group"] = self.regionGroupNames[i].get()
+            regionSettings[str(i+1)]["Priority Type"] = self.priorityTypes[i].get()
+            regionSettings[str(i+1)]["Region/Language Tags"] = self.regionTags[i].get()
+        regionSettings["Other"] = {}
+        regionSettings["Other"]["Region Group"] = self.regionGroupTertiary.get()
+        regionSettings["Other"]["Priority Type"] = "Tertiary"
+        with open(regionsFile, 'w') as rf:
+            regionSettings.write(rf)
 
     def ssch(self, val): # settings_saveChangesHelper
         if val.get():
@@ -597,7 +828,7 @@ class EzroApp:
 
     def changeMainTab(self, event=None):
         if self.Main_Notebook.tab(self.Main_Notebook.select(), "text") == "Config":
-            self.loadDefaultSettingsInSettingsTab()
+            self.loadConfig()
 
 
 
@@ -644,11 +875,11 @@ class EzroApp:
             "Rev", "Beta", "Demo", "Sample", "Proto", "Alt", "Earlier",
             "Download Station", "FW", "Reprint"
             ])
-        with open(defaultSettingsFile, 'w') as mcf:
-            defaultSettings.write(mcf)
+        with open(defaultSettingsFile, 'w') as dsf:
+            defaultSettings.write(dsf)
 
-    def loadDefaultSettingsInSettingsTab(self):
-        global defaultSettings
+    def loadConfig(self):
+        global defaultSettings, regionSettings
         defaultSettings = configparser.ConfigParser(allow_no_value=True)
         defaultSettings.optionxform = str
         defaultSettings.read(defaultSettingsFile)
@@ -667,9 +898,29 @@ class EzroApp:
         self.g_includeBIOS.set(defaultSettings["Include"]["BIOS"] == "True")
         self.g_includeNESPorts.set(defaultSettings["Include"]["(GBA) NES Ports"] == "True")
         self.g_includeGBAVideo.set(defaultSettings["Include"]["(GBA) GBA Video"] == "True")
+        regionSettings = configparser.ConfigParser(allow_no_value=True)
+        regionSettings.optionxform = str
+        regionSettings.read(regionsFile)
+        while self.regionNum > 0:
+            self.removeRegionGroup(0)
+        keys = list(regionSettings.keys())[1:]
+        for i in range(len(keys)):
+            if keys[i].isdigit():
+                self.addRegionGroup(groupName=regionSettings[str(i+1)]["Region Group"], groupType=regionSettings[str(i+1)]["Priority Type"], groupTags=regionSettings[str(i+1)]["Region/Language Tags"])
+            elif keys[i] == "Other":
+                self.regionGroupTertiary.set(regionSettings["Other"]["Region Group"])
+                self.Config_Region_Choice_Name_Entry_Tertiary.configure(text=self.regionGroupTertiary)
+
+    def menu_viewHelp(self):
+        showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
+
+    def menu_viewAbout(self):
+        showinfo("About", "EzRO Rom Organizer v1.00\n\nhttps://github.com/Mips96/EzRO-gui")
 
 if __name__ == '__main__':
     root = tk.Tk()
+    root.resizable(False, False)
+    root.title("EzRO")
     app = EzroApp(root)
     app.run()
 
