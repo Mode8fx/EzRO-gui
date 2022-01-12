@@ -3,11 +3,13 @@ import pygubu
 try:
     import Tkinter as tk
     import Tkinter.ttk as ttk
-    from Tkinter.messagebox import showinfo, showerror
+    from Tkinter.messagebox import showinfo, showerror, askyesno
+    from Tkinter import Toplevel
 except:
     import tkinter as tk
     import tkinter.ttk as ttk
-    from tkinter.messagebox import showinfo, showerror
+    from tkinter.messagebox import showinfo, showerror, askyesno
+    from tkinter import Toplevel
 from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
@@ -25,6 +27,7 @@ from filehash import FileHash
 import configparser
 from dateutil.parser import parse as dateParse
 import binascii
+from time import sleep
 
 progFolder = getCurrFolder()
 sys.path.append(progFolder)
@@ -51,14 +54,14 @@ class EzroApp:
     def __init__(self, master=None):
 
         # Menu Bar
-        menubar = tk.Menu(root, tearoff=0)
+        menubar = tk.Menu(tk_root, tearoff=0)
         fileMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
         helpMenu.add_command(label="View Help...", command=self.menu_viewHelp)
         helpMenu.add_separator()
         helpMenu.add_command(label="About...", command=self.menu_viewAbout)
         menubar.add_cascade(label="Help", menu=helpMenu)
-        root.config(menu=menubar)
+        tk_root.config(menu=menubar)
 
         # build ui
         self.Main_Notebook = ttk.Notebook(master)
@@ -258,7 +261,7 @@ class EzroApp:
             self.createDefaultSettings()
         if not path.exists(regionsFile):
             self.createRegionSettings()
-    
+
     def run(self):
         self.mainwindow.mainloop()
 
@@ -530,7 +533,7 @@ class EzroApp:
     def export_addSystem(self):
         currSystemChoice = self.systemChoice.get()
         if (currSystemChoice != ""):
-            for es in self.Export_Systems.tabs(): # TODO: this doesn't work as it should
+            for es in self.Export_Systems.tabs():
                 if self.Export_Systems.tab(es, "text") == currSystemChoice:
                     return
             self.addSystemTab(currSystemChoice)
@@ -561,13 +564,64 @@ class EzroApp:
         pass
 
     def export_auditSystem(self):
-        # currSystemPath = self.romsetFolderPathChoices[self.Export_Systems.index(self.Export_Systems.select())]
-        currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
-        self.updateAndAuditVerifiedRomsets([currSystemIndex])
+        if self.exportTabNum > 0:
+            currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
+            self.openAuditWindow(numSystems=1, systemIndexList=[currSystemIndex])
 
     def export_auditAllSystems(self):
         allSystemIndices = list([range(self.exportTabNum)])
-        self.updateAndAuditVerifiedRomsets(allSystemIndices)
+        self.openAuditWindow(numSystems=len(allSystemIndices), systemIndexList=allSystemIndices)
+
+    def openAuditWindow(self, numSystems, systemIndexList):
+        self.systemIndexList = systemIndexList
+        self.auditInProgress = False
+        self.Audit_Window = Toplevel()
+        self.Audit_Window.title("EzRO Audit")
+        self.Audit_Frame = ttk.Frame(self.Audit_Window)
+        self.Audit_MainProgress_Label = ttk.Label(self.Audit_Frame)
+        if numSystems == 1:
+            self.Audit_MainProgress_Label.configure(text='Preparing to audit system: '+self.exportSystemNames[systemIndexList[0]])
+        else:
+            self.Audit_MainProgress_Label.configure(text='Preparing to audit '+str(numSystems)+' systems')
+        self.Audit_MainProgress_Label.place(anchor='center', relx='.5', rely='.05', x='0', y='0')
+        self.Audit_MainProgress_Bar = ttk.Progressbar(self.Audit_Frame)
+        self.Audit_MainProgress_Bar.configure(maximum=numSystems, orient='horizontal')
+        self.Audit_MainProgress_Bar.place(anchor='center', relwidth='.9', relx='.5', rely='.11', x='0', y='0')
+        self.Audit_SubProgress_Bar = ttk.Progressbar(self.Audit_Frame)
+        self.Audit_SubProgress_Bar.configure(maximum='100', orient='horizontal')
+        self.Audit_SubProgress_Bar.place(anchor='center', relwidth='.9', relx='.5', rely='.17', x='0', y='0')
+        self.SubProgress_TextField = tk.Text(self.Audit_Frame)
+        self.SubProgress_TextField.configure(autoseparators='true', blockcursor='false', height='10', insertontime='0')
+        self.SubProgress_TextField.configure(insertwidth='0', state='disabled', tabstyle='tabular', takefocus=False)
+        self.SubProgress_TextField.configure(width='50', wrap='word')
+        self.SubProgress_TextField.place(anchor='n', relheight='.62', relwidth='.9', relx='.5', rely='.23', x='0', y='0')
+        self.Audit_StartButton = ttk.Button(self.Audit_Frame)
+        self.audit_startButtonText = tk.StringVar(value='Start Audit')
+        self.Audit_StartButton.configure(text='Start Audit', textvariable=self.audit_startButtonText)
+        self.Audit_StartButton.place(anchor='center', relx='.4', rely='.925', x='0', y='0')
+        self.Audit_StartButton.configure(command=self.audit_startAudit)
+        self.Audit_CancelButton = ttk.Button(self.Audit_Frame)
+        self.audit_cancelButtonText = tk.StringVar(value='Cancel')
+        self.Audit_CancelButton.configure(text='Cancel', textvariable=self.audit_cancelButtonText)
+        self.Audit_CancelButton.place(anchor='center', relx='.6', rely='.925', x='0', y='0')
+        self.Audit_CancelButton.configure(command=self.audit_cancelAudit)
+        self.Audit_Frame.configure(height='200', width='200')
+        self.Audit_Frame.place(anchor='nw', relheight='1', relwidth='1', relx='0', rely='0', x='0', y='0')
+        self.Audit_Window.configure(height='600', width='800')
+        self.Audit_Window.grab_set()
+
+    def audit_startAudit(self):
+        self.updateAndAuditVerifiedRomsets(self.systemIndexList)
+
+    def audit_cancelAudit(self):
+        # Cancelling an audit early causes an error in tkinter (writing to a progressbar/text field/etc. that no longer exists) but it doesn't actually affect anything
+        if self.auditInProgress:
+            if askyesno("EzRO Audit", "Cancel the audit?"):
+                self.auditInProgress = False
+                self.Audit_Window.destroy()
+        else:
+            self.auditInProgress = False
+            self.Audit_Window.destroy()
 
     def export_exportSystem(self):
         pass
@@ -588,12 +642,22 @@ class EzroApp:
     def updateAndAuditVerifiedRomsets(self, systemIndices):
         global allGameNamesInDAT, romsWithoutCRCMatch, progressBar, recentlyVerified
 
+        self.auditInProgress = True
+        self.Audit_MainProgress_Label.configure(text='Auditing...')
+        self.Audit_MainProgress_Bar['value'] = 0
+        isFirstSystem = True
         for currIndex in systemIndices:
+            self.Audit_SubProgress_Bar['value'] = 0
             currSystemFolder = self.romsetFolderPathChoices[currIndex].get()
             currSystemName = self.exportSystemNames[currIndex]
             if not path.isdir(currSystemFolder):
                 continue
-            # TODO: print("\n====================\n\n"+currSystemName+"\n")
+            if isFirstSystem:
+                isFirstSystem = False
+            else:
+                self.writeTextToSubProgress("========================================\n\n")
+            self.Audit_MainProgress_Label.configure(text="Auditing system: "+currSystemName)
+            self.writeTextToSubProgress("Auditing system: "+currSystemName+"\n\n")
             isNoIntro = True
             currSystemDAT = self.datFilePathChoices[currIndex].get()
             tree = ET.parse(currSystemDAT)
@@ -624,20 +688,21 @@ class EzroApp:
                 for file in files:
                     if path.basename(root) != "[Unverified]":
                         numFiles += 1
-            # TODO: create progress bar here; length = numFiles
+            self.Audit_SubProgress_Bar.configure(maximum=str(numFiles))
             for root, dirs, files in walk(currSystemFolder):
                 for file in files:
                     if path.basename(root) != "[Unverified]":
-                        # TODO: increment progress bar by 1 here
                         foundMatch = self.renamingProcess(root, file, isNoIntro, headerLength, crcToGameName, allGameNames)
-            # TODO: close progress bar here
+                        self.Audit_SubProgress_Bar['value'] += 1
+                        # tk_root.update_idletasks()
+                        tk_root.update() # a normal update() allows us to check if the Cancel button was clicked, allowing a safe early exit
             xmlRomsInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == True]
             xmlRomsNotInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == False]
             self.createSystemAuditLog(xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName)
             numNoCRC = len(romsWithoutCRCMatch)
             if numNoCRC > 0:
-                #TODO: print("\nWarning: "+str(numNoCRC)+pluralize(" file", numNoCRC)+" in this system folder "+pluralize("do", numNoCRC, "es", "")+" not have a matching database entry.")
-                #TODO: print("If this system folder is in your main verified rom directory, you should move "+pluralize("", numNoCRC, "this file", "these files")+" to your secondary folder; otherwise, "+pluralize("", numNoCRC, "it", "they")+" may be ignored when exporting this system's romset to another device.")
+                self.writeTextToSubProgress("NOTICE: "+str(numNoCRC)+pluralize(" file", numNoCRC)+" in this system folder "+pluralize("do", numNoCRC, "es", "")+" not have a matching entry in the provided DAT file.\n")
+                self.writeTextToSubProgress(pluralize("", numNoCRC, "This file", "These files")+" may be ignored when exporting this system's romset to another device.\n\n")
                 # if moveUnverified == 1:
                 #     numMoved = 0
                 #     unverifiedFolder = path.join(currSystemFolder, "[Unverified]")
@@ -649,10 +714,14 @@ class EzroApp:
                 #         except:
                 #             pass
                 #     print("Moved "+str(numMoved)+" of these file(s) to \"[Unverified]\" subfolder in system directory.")
-                pass
+            self.Audit_MainProgress_Bar['value'] += 1
+            tk_root.update_idletasks()
 
         self.recentlyVerified = True
-        showinfo("Audit", "Audit complete.")
+        self.writeTextToSubProgress("Done.")
+        self.Audit_MainProgress_Label.configure(text="Audit complete.")
+        self.audit_cancelButtonText.set("Finish")
+        self.auditInProgress = False
 
 
 
@@ -691,7 +760,7 @@ class EzroApp:
         if isNoIntro:
             currFileCRC = self.getCRC(currFilePath, headerLength)
             if not currFileCRC:
-                # TODO: progressBar.write(file+" archive contains more than one file. Skipping.")
+                self.writeTextToSubProgress(file+" archive contains more than one file. Skipping.\n\n")
                 romsWithoutCRCMatch.append(file)
                 return
             matchingGameNames = crcToGameName.get(currFileCRC)
@@ -716,12 +785,13 @@ class EzroApp:
                         dnStart = matchingGameNames[0]+" (copy) ("
                         i = 1
                         while True:
-                            duplicateName = path.join(root, dnStart+str(i)+")")
-                            if not path.exists(duplicateName):
+                            duplicateName = dnStart+str(i)+")"
+                            duplicatePath = path.join(root, duplicateName)
+                            if not path.exists(duplicatePath):
                                 break
                             i += 1
                         self.renameGame(currFilePath, duplicateName, currFileExt)
-                        # TODO: progressBar.write("Duplicate found and renamed: "+duplicateName)
+                        self.writeTextToSubProgress("Duplicate found and renamed: "+duplicateName+"\n\n")
                 else:
                     allGameNamesInDAT[currFileName] = True
                 foundMatch = True
@@ -739,7 +809,7 @@ class EzroApp:
             self.renameArchiveAndContent(filePath, newName)
         else:
             rename(filePath, path.join(path.dirname(filePath), newName+fileExt))
-            # TODO: progressBar.write("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName)
+            self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName+"\n\n")
 
 
 
@@ -775,7 +845,7 @@ class EzroApp:
         with zipfile.ZipFile(archivePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
             zippedFiles = zippedFile.namelist()
             if len(zippedFiles) > 1:
-                # TODO: progressBar.write("This archive contains more than one file. Skipping.")
+                self.writeTextToSubProgress("Archive contains more than one file. Skipping.\n")
                 return
             fileExt = path.splitext(zippedFiles[0])[1]
             archiveExt = path.splitext(archivePath)[1]
@@ -786,9 +856,16 @@ class EzroApp:
             rename(currExtractedFilePath, newExtractedFilePath)
         remove(archivePath)
         with zipfile.ZipFile(newArchivePath, 'w', zipfile.ZIP_DEFLATED) as newZip:
-            newZip.write(newExtractedFilePath, arcname='\\'+newName+fileExt)
+            newZip.write(newExtractedFilePath, arcname=newName+fileExt)
         remove(newExtractedFilePath)
-        # TODO: progressBar.write("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName)
+        self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName+"\n\n")
+
+
+
+    def writeTextToSubProgress(self, text):
+        self.SubProgress_TextField.configure(state='normal')
+        self.SubProgress_TextField.insert(tk.END, text)
+        self.SubProgress_TextField.configure(state='disabled')
 
     #############
     # FAVORITES #
@@ -1150,10 +1227,12 @@ class EzroApp:
     def menu_viewAbout(self):
         showinfo("About", "EzRO Rom Organizer v1.00\n\nhttps://github.com/Mips96/EzRO-gui")
 
+
+
 if __name__ == '__main__':
-    root = tk.Tk()
-    root.resizable(False, False)
-    root.title("EzRO")
-    app = EzroApp(root)
+    tk_root = tk.Tk()
+    tk_root.resizable(False, False)
+    tk_root.title("EzRO")
+    app = EzroApp(tk_root)
     app.run()
 
