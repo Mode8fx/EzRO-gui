@@ -1,17 +1,17 @@
 import pathlib
 import pygubu
-import tkinter as tk
-import tkinter.ttk as ttk
+try:
+    import Tkinter as tk
+    import Tkinter.ttk as ttk
+    from Tkinter.messagebox import showinfo, showerror
+except:
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    from tkinter.messagebox import showinfo, showerror
 from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
 import pygubu.widgets.simpletooltip as tooltip
-try:
-    import Tkinter as tk
-    from Tkinter.messagebox import showinfo, showerror
-except:
-    import tkinter as tk
-    from tkinter.messagebox import showinfo, showerror
 
 from os import path, mkdir, listdir, remove, walk, rename, rmdir
 import re
@@ -24,7 +24,6 @@ from gatelib import *
 from filehash import FileHash
 import configparser
 from dateutil.parser import parse as dateParse
-from tqdm import tqdm
 import binascii
 
 progFolder = getCurrFolder()
@@ -33,9 +32,11 @@ crcHasher = FileHash('crc32')
 
 defaultSettingsFile = path.join(progFolder, "settings.ini")
 regionsFile = path.join(progFolder, "regions.ini")
+logFolder = path.join(progFolder, "Logs")
 
 systemListStr = " ".join([
     "\"\"",
+    "\"Atari 2600\"",
     "\"Game Boy Advance\"",
     "\"Sega Genesis\"",
     "\"Super Nintendo Entertainment System\""
@@ -261,8 +262,14 @@ class EzroApp:
     def run(self):
         self.mainwindow.mainloop()
 
+    #########################
+    # EXPORT (GUI Handling) #
+    #########################
+
     def initVars(self):
+        self.recentlyVerified = False
         self.exportTabNum = 0
+        self.exportSystemNames = []
         self.Export_ScrolledFrame_ = []
         self.Export_DAT_Label_ = []
         self.Export_DAT_PathChooser_ = []
@@ -343,6 +350,7 @@ class EzroApp:
         self.regionTags = []
 
     def addSystemTab(self, systemName="New System"):
+        self.exportSystemNames.append(None)
         self.Export_ScrolledFrame_.append(None)
         self.Export_DAT_Label_.append(None)
         self.Export_DAT_PathChooser_.append(None)
@@ -389,6 +397,7 @@ class EzroApp:
         self.Export_OverwriteDuplicates_.append(None)
         self.overwriteDuplicatesChoices.append(None)
         self.Export_RemoveSystem_.append(None)
+        self.exportSystemNames[self.exportTabNum] = systemName
         self.Export_ScrolledFrame_[self.exportTabNum] = ScrolledFrame(self.Export_Systems, scrolltype='both')
         self.Export_DAT_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_DAT_Label_[self.exportTabNum].configure(text='Input No-Intro DAT')
@@ -552,10 +561,13 @@ class EzroApp:
         pass
 
     def export_auditSystem(self):
-        pass
+        # currSystemPath = self.romsetFolderPathChoices[self.Export_Systems.index(self.Export_Systems.select())]
+        currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
+        self.updateAndAuditVerifiedRomsets([currSystemIndex])
 
     def export_auditAllSystems(self):
-        pass
+        allSystemIndices = list([range(self.exportTabNum)])
+        self.updateAndAuditVerifiedRomsets(allSystemIndices)
 
     def export_exportSystem(self):
         pass
@@ -569,6 +581,219 @@ class EzroApp:
             +"\n\nThis also creates a log file indicating which roms exist in the romset, which roms are missing, and which roms are in the set that don't match anything from the DAT."
             +"\n\nIt is highly recommended that you audit a system directory whenever you update that system's No-Intro DAT.")
 
+    ##################
+    # EXPORT (Logic) #
+    ##################
+
+    def updateAndAuditVerifiedRomsets(self, systemIndices):
+        global allGameNamesInDAT, romsWithoutCRCMatch, progressBar, recentlyVerified
+
+        for currIndex in systemIndices:
+            currSystemFolder = self.romsetFolderPathChoices[currIndex].get()
+            currSystemName = self.exportSystemNames[currIndex]
+            if not path.isdir(currSystemFolder):
+                continue
+            # TODO: print("\n====================\n\n"+currSystemName+"\n")
+            isNoIntro = True
+            currSystemDAT = self.datFilePathChoices[currIndex].get()
+            tree = ET.parse(currSystemDAT)
+            treeRoot = tree.getroot()
+            allGameFields = treeRoot[1:]
+            crcToGameName = {}
+            allGameNames = []
+            for game in allGameFields:
+                gameName = game.get("name")
+                allGameNames.append(gameName)
+                try:
+                    gameCRC = game.find("rom").get("crc").upper()
+                except:
+                    gameCRC = None
+                if gameCRC not in crcToGameName.keys():
+                    crcToGameName[gameCRC] = []
+                crcToGameName[gameCRC].append(gameName)
+            if currSystemName == "Nintendo Entertainment System":
+                headerLength = 16
+            else:
+                headerLength = 0
+            allGameNamesInDAT = {}
+            for gameName in allGameNames:
+                allGameNamesInDAT[gameName] = False
+            romsWithoutCRCMatch = []
+            numFiles = 0
+            for root, dirs, files in walk(currSystemFolder):
+                for file in files:
+                    if path.basename(root) != "[Unverified]":
+                        numFiles += 1
+            # TODO: create progress bar here; length = numFiles
+            for root, dirs, files in walk(currSystemFolder):
+                for file in files:
+                    if path.basename(root) != "[Unverified]":
+                        # TODO: increment progress bar by 1 here
+                        foundMatch = self.renamingProcess(root, file, isNoIntro, headerLength, crcToGameName, allGameNames)
+            # TODO: close progress bar here
+            xmlRomsInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == True]
+            xmlRomsNotInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == False]
+            self.createSystemAuditLog(xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName)
+            numNoCRC = len(romsWithoutCRCMatch)
+            if numNoCRC > 0:
+                #TODO: print("\nWarning: "+str(numNoCRC)+pluralize(" file", numNoCRC)+" in this system folder "+pluralize("do", numNoCRC, "es", "")+" not have a matching database entry.")
+                #TODO: print("If this system folder is in your main verified rom directory, you should move "+pluralize("", numNoCRC, "this file", "these files")+" to your secondary folder; otherwise, "+pluralize("", numNoCRC, "it", "they")+" may be ignored when exporting this system's romset to another device.")
+                # if moveUnverified == 1:
+                #     numMoved = 0
+                #     unverifiedFolder = path.join(currSystemFolder, "[Unverified]")
+                #     createDir(unverifiedFolder)
+                #     for fileName in romsWithoutCRCMatch:
+                #         try:
+                #             rename(path.join(currSystemFolder, fileName), path.join(unverifiedFolder, fileName))
+                #             numMoved += 1
+                #         except:
+                #             pass
+                #     print("Moved "+str(numMoved)+" of these file(s) to \"[Unverified]\" subfolder in system directory.")
+                pass
+
+        self.recentlyVerified = True
+        showinfo("Audit", "Audit complete.")
+
+
+
+    def getCRC(self, filePath, headerLength=0):
+        if zipfile.is_zipfile(filePath):
+            with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                if len(zippedFile.namelist()) > 1:
+                    return False
+                if headerLength == 0:
+                    fileInfo = zippedFile.infolist()[0]
+                    fileCRC = format(fileInfo.CRC & 0xFFFFFFFF, '08x')
+                    return fileCRC.zfill(8).upper()
+                else:
+                    fileBytes = zippedFile.read(zippedFile.namelist()[0])
+                    headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+                    return headerlessCRC.zfill(8).upper()
+        else:
+            if headerLength == 0:
+                fileCRC = crcHasher.hash_file(filePath)
+                return fileCRC.zfill(8).upper()
+            with open(filePath, "rb") as unheaderedFile:
+                fileBytes = unheaderedFile.read()
+                headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+                return headerlessCRC.zfill(8).upper()
+
+
+
+    def renamingProcess(self, root, file, isNoIntro, headerLength, crcToGameName, allGameNames):
+        global allGameNamesInDAT, romsWithoutCRCMatch
+        currFilePath = path.join(root, file)
+        currFileName, currFileExt = path.splitext(file)
+        if not path.isfile(currFilePath): # this is necessary
+            romsWithoutCRCMatch.append(file)
+            return
+        foundMatch = False
+        if isNoIntro:
+            currFileCRC = self.getCRC(currFilePath, headerLength)
+            if not currFileCRC:
+                # TODO: progressBar.write(file+" archive contains more than one file. Skipping.")
+                romsWithoutCRCMatch.append(file)
+                return
+            matchingGameNames = crcToGameName.get(currFileCRC)
+            if matchingGameNames is not None:
+                if not currFileName in matchingGameNames:
+                    currFileIsDuplicate = True
+                    for name in matchingGameNames:
+                        currPossibleMatchingGame = path.join(root, name+currFileExt)
+                        if not path.exists(currPossibleMatchingGame):
+                            self.renameGame(currFilePath, name, currFileExt)
+                            allGameNamesInDAT[name] = True
+                            currFileIsDuplicate = False
+                            break
+                        elif self.getCRC(currPossibleMatchingGame, headerLength) != currFileCRC: # If the romset started with a rom that has a name in the database, but with the wrong hash (e.g. it's called "Doom 64 (USA)", but it's actually something else)
+                            self.renameGame(currPossibleMatchingGame, name+" (no match)", currFileExt)
+                            self.renameGame(currFilePath, name, currFileExt)
+                            self.renamingProcess(root, name+" (no match)", isNoIntro, headerLength, crcToGameName, allGameNames)
+                            allGameNamesInDAT[name] = True
+                            currFileIsDuplicate = False
+                            break
+                    if currFileIsDuplicate:
+                        dnStart = matchingGameNames[0]+" (copy) ("
+                        i = 1
+                        while True:
+                            duplicateName = path.join(root, dnStart+str(i)+")")
+                            if not path.exists(duplicateName):
+                                break
+                            i += 1
+                        self.renameGame(currFilePath, duplicateName, currFileExt)
+                        # TODO: progressBar.write("Duplicate found and renamed: "+duplicateName)
+                else:
+                    allGameNamesInDAT[currFileName] = True
+                foundMatch = True
+        else:
+            if currFileName in allGameNames:
+                allGameNamesInDAT[currFileName] = True
+                foundMatch = True
+        if not foundMatch:
+            romsWithoutCRCMatch.append(file)
+
+
+
+    def renameGame(self, filePath, newName, fileExt):
+        if zipfile.is_zipfile(filePath):
+            self.renameArchiveAndContent(filePath, newName)
+        else:
+            rename(filePath, path.join(path.dirname(filePath), newName+fileExt))
+            # TODO: progressBar.write("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName)
+
+
+
+    def createSystemAuditLog(self, xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName):
+        xmlRomsInSet.sort()
+        xmlRomsNotInSet.sort()
+        romsWithoutCRCMatch.sort()
+
+        numOverlap = len(xmlRomsInSet)
+        numNotInSet = len(xmlRomsNotInSet)
+        numNoCRC = len(romsWithoutCRCMatch)
+        createDir(logFolder)
+        auditLogFile = open(path.join(logFolder, "Audit ("+currSystemName+") ["+str(numOverlap)+" out of "+str(numOverlap+numNotInSet)+"] ["+str(numNoCRC)+" unverified].txt"), "w", encoding="utf-8", errors="replace")
+        auditLogFile.writelines("=== "+currSystemName+" ===\n")
+        auditLogFile.writelines("=== This romset contains "+str(numOverlap)+" of "+str(numOverlap+numNotInSet)+" known ROMs ===\n\n")
+        if numOverlap > 0:
+            auditLogFile.writelines("= CONTAINS =\n")
+            for rom in xmlRomsInSet:
+                auditLogFile.writelines(rom+"\n")
+        if numNotInSet > 0:
+            auditLogFile.writelines("\n= MISSING =\n")
+            for rom in xmlRomsNotInSet:
+                auditLogFile.writelines(rom+"\n")
+        if numNoCRC > 0:
+            auditLogFile.writelines("\n=== This romset contains "+str(numNoCRC)+pluralize(" file", numNoCRC)+" with no known database match ===\n\n")
+            for rom in romsWithoutCRCMatch:
+                auditLogFile.writelines(rom+"\n")
+        auditLogFile.close()
+
+
+
+    def renameArchiveAndContent(self, archivePath, newName):
+        with zipfile.ZipFile(archivePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+            zippedFiles = zippedFile.namelist()
+            if len(zippedFiles) > 1:
+                # TODO: progressBar.write("This archive contains more than one file. Skipping.")
+                return
+            fileExt = path.splitext(zippedFiles[0])[1]
+            archiveExt = path.splitext(archivePath)[1]
+            zippedFile.extract(zippedFiles[0], path.dirname(archivePath))
+            currExtractedFilePath = path.join(path.dirname(archivePath), zippedFiles[0])
+            newArchivePath = path.join(path.dirname(archivePath), newName+archiveExt)
+            newExtractedFilePath = path.splitext(newArchivePath)[0]+fileExt
+            rename(currExtractedFilePath, newExtractedFilePath)
+        remove(archivePath)
+        with zipfile.ZipFile(newArchivePath, 'w', zipfile.ZIP_DEFLATED) as newZip:
+            newZip.write(newExtractedFilePath, arcname='\\'+newName+fileExt)
+        remove(newExtractedFilePath)
+        # TODO: progressBar.write("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName)
+
+    #############
+    # FAVORITES #
+    #############
+
     def favorites_loadList(self):
         pass
 
@@ -577,6 +802,10 @@ class EzroApp:
 
     def favorites_saveList(self):
         pass
+
+    ##########
+    # CONFIG #
+    ##########
 
     def addRegionGroup(self, groupName="", groupType="", groupTags=""):
         self.Config_Region_Choice_RemoveButton_.append(None)
@@ -910,6 +1139,10 @@ class EzroApp:
             elif keys[i] == "Other":
                 self.regionGroupTertiary.set(regionSettings["Other"]["Region Group"])
                 self.Config_Region_Choice_Name_Entry_Tertiary.configure(text=self.regionGroupTertiary)
+
+    ########
+    # MISC #
+    ########
 
     def menu_viewHelp(self):
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
