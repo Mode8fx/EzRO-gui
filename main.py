@@ -28,6 +28,7 @@ import configparser
 from dateutil.parser import parse as dateParse
 import binascii
 from time import sleep
+from SystemNames import systemNamesDict
 
 progFolder = getCurrFolder()
 sys.path.append(progFolder)
@@ -36,21 +37,6 @@ crcHasher = FileHash('crc32')
 defaultSettingsFile = path.join(progFolder, "settings.ini")
 regionsFile = path.join(progFolder, "regions.ini")
 logFolder = path.join(progFolder, "Logs")
-
-systemListStr = " ".join([
-    "\"\"",
-    "\"Atari 2600\"",
-    "\"Game Boy Advance\"",
-    "\"Sega Genesis / Mega Drive\"",
-    "\"Super Nintendo Entertainment System\""
-])
-
-systemNamesDict = {
-    "Atari 2600"                          : ["Atari 2600", "Atari - 2600", "Atari - Atari 2600", "atari2600", "a2600"],
-    "Game Boy Advance"                    : ["Game Boy Advance", "Gameboy Advance", "Nintendo - Game Boy Advance", "Nintendo - Gameboy Advance", "GBA"],
-    "Sega Genesis / Mega Drive"           : ["Sega Genesis / Mega Drive", "Sega Genesis", "Sega Mega Drive", "Genesis", "Mega Drive", "Megadrive"],
-    "Super Nintendo Entertainment System" : ["Super Nintendo Entertainment System", "Super Nintendo", "SNES", "Super Famicom"]
-}
 
 systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys()])
 
@@ -550,27 +536,51 @@ class EzroApp:
 
     def setSystemDAT(self, systemName):
         self.datFilePathChoices[self.exportTabNum] = tk.StringVar(value='')
+        if self.ssdHelper(systemName):
+            return
         alternateSystemNames = systemNamesDict.get(systemName)
         if alternateSystemNames is not None:
             for name in alternateSystemNames:
-                currSystemDAT = path.join(self.g_datFilePath.get(), name+".dat").replace("\\", "/")
-                if path.isfile(currSystemDAT):
-                    self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
+                if self.ssdHelper(name):
                     return
+
+    def ssdHelper(self, name):
+        currSystemDAT = path.join(self.g_datFilePath.get(), name+".dat").replace("\\", "/")
+        if path.isfile(currSystemDAT):
+            self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
+            return True
+        if " - " in name:
+            currSystemDAT = path.join(self.g_datFilePath.get(), name.replace(" - ", " ")+".dat").replace("\\", "/")
+            if path.isfile(currSystemDAT):
+                self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
+                return True
+        return False
 
     def setInputRomsetDir(self, systemName):
         self.romsetFolderPathChoices[self.exportTabNum] = tk.StringVar(value='')
+        if self.sirdHelper(systemName):
+            return
         alternateSystemNames = systemNamesDict.get(systemName)
         if alternateSystemNames is not None:
             for name in alternateSystemNames:
-                currSystemInputDir = path.join(self.g_romsetFolderPath.get(), name).replace("\\", "/")
-                if path.isdir(currSystemInputDir):
-                    self.romsetFolderPathChoices[self.exportTabNum].set(currSystemInputDir)
+                if self.sirdHelper(name):
                     return
+
+    def sirdHelper(self, name):
+        currSystemInputDir = path.join(self.g_romsetFolderPath.get(), name).replace("\\", "/")
+        if path.isdir(currSystemInputDir):
+            self.romsetFolderPathChoices[self.exportTabNum].set(currSystemInputDir)
+            return True
+        if " - " in name:
+            currSystemInputDir = path.join(self.g_romsetFolderPath.get(), name.replace(" - ", " ")).replace("\\", "/")
+            if path.isdir(currSystemInputDir):
+                self.romsetFolderPathChoices[self.exportTabNum].set(currSystemInputDir)
+                return True
+        return False
 
     def export_addSystem(self):
         currSystemChoice = self.systemChoice.get()
-        if (currSystemChoice != ""):
+        if (currSystemChoice.replace("-","").replace("=","") != ""):
             for es in self.Export_Systems.tabs():
                 if self.Export_Systems.tab(es, "text") == currSystemChoice:
                     return
@@ -658,14 +668,41 @@ class EzroApp:
             self.Export_Systems.select(currSystemIndex - 1)
 
     def export_auditSystem(self):
-        if self.exportTabNum > 0:
-            currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
-            self.openAuditWindow(numSystems=1, systemIndexList=[currSystemIndex])
+        currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
+        if self.auditCheck(currSystemIndex):
+            if self.exportTabNum > 0:
+                self.openAuditWindow(numSystems=1, systemIndexList=currSystemIndex)
 
     def export_auditAllSystems(self):
-        if self.exportTabNum > 0:
-            allSystemIndices = list(range(self.exportTabNum))
-            self.openAuditWindow(numSystems=len(allSystemIndices), systemIndexList=allSystemIndices)
+        allSystemIndices = list(range(self.exportTabNum))
+        if self.auditCheck(allSystemIndices):
+            if self.exportTabNum > 0:
+                self.openAuditWindow(numSystems=len(allSystemIndices), systemIndexList=allSystemIndices)
+
+    def auditCheck(self, systemIndices):
+        failureMessage = ""
+        for ind in systemIndices:
+            currSystemName = self.exportSystemNames[ind]
+            currSystemDAT = self.datFilePathChoices[ind].get()
+            currSystemFolder = self.romsetFolderPathChoices[ind].get()
+            if currSystemDAT == "":
+                failureMessage += currSystemName+": Missing DAT file.\n"
+            elif not path.isfile(currSystemDAT):
+                failureMessage += currSystemName+": Invalid DAT file (file not found).\n"
+            else:
+                tree = ET.parse(currSystemDAT)
+                treeRoot = tree.getroot()
+                firstGameName = treeRoot[1].get("name")
+                if firstGameName is None or firstGameName == "":
+                    failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+            if currSystemFolder == "":
+                failureMessage += currSystemName+": Missing input romset.\n"
+            elif not path.isdir(currSystemFolder):
+                failureMessage += currSystemName+": Invalid input romset (directory not found).\n"
+        if failureMessage == "":
+            return True
+        showinfo("Invalid Parameters", "Please fix the following issues before attempting an audit:\n\n"+failureMessage.strip())
+        return False
 
     def openAuditWindow(self, numSystems, systemIndexList):
         self.systemIndexList = systemIndexList
@@ -745,8 +782,8 @@ class EzroApp:
         isFirstSystem = True
         for currIndex in systemIndices:
             self.Audit_SubProgress_Bar['value'] = 0
-            currSystemFolder = self.romsetFolderPathChoices[currIndex].get()
             currSystemName = self.exportSystemNames[currIndex]
+            currSystemFolder = self.romsetFolderPathChoices[currIndex].get()
             if not path.isdir(currSystemFolder):
                 continue
             if isFirstSystem:
