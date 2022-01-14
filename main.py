@@ -41,9 +41,18 @@ systemListStr = " ".join([
     "\"\"",
     "\"Atari 2600\"",
     "\"Game Boy Advance\"",
-    "\"Sega Genesis\"",
+    "\"Sega Genesis / Mega Drive\"",
     "\"Super Nintendo Entertainment System\""
 ])
+
+systemNamesDict = {
+    "Atari 2600"                          : ["Atari 2600", "Atari - 2600", "Atari - Atari 2600", "atari2600", "a2600"],
+    "Game Boy Advance"                    : ["Game Boy Advance", "Gameboy Advance", "Nintendo - Game Boy Advance", "Nintendo - Gameboy Advance", "GBA"],
+    "Sega Genesis / Mega Drive"           : ["Sega Genesis / Mega Drive", "Sega Genesis", "Sega Mega Drive", "Genesis", "Mega Drive", "Megadrive"],
+    "Super Nintendo Entertainment System" : ["Super Nintendo Entertainment System", "Super Nintendo", "SNES", "Super Famicom"]
+}
+
+systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys()])
 
 
 
@@ -139,16 +148,16 @@ class EzroApp:
         self.Config_Default_DATDir_Label.configure(text='Input No-Intro DAT Directory')
         self.Config_Default_DATDir_Label.grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Config_Default_DATDir_PathChooser = PathChooserInput(self.Config_Default_Frame)
-        self.g_datFilePathChoices = tk.StringVar(value='')
-        self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePathChoices, type='directory')
-        self.Config_Default_DATDir_PathChooser.grid(column='0', padx='200', pady='10', row='0', sticky='w')
+        self.g_datFilePath = tk.StringVar(value='')
+        self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePath, type='directory')
+        self.Config_Default_DATDir_PathChooser.grid(column='0', ipadx='90', padx='200', pady='10', row='0', sticky='w')
         self.Config_Default_RomsetDir_Label = ttk.Label(self.Config_Default_Frame)
         self.Config_Default_RomsetDir_Label.configure(text='Input Romset Directory')
         self.Config_Default_RomsetDir_Label.grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Config_Default_RomsetDir_PathChooser = PathChooserInput(self.Config_Default_Frame)
         self.g_romsetFolderPath = tk.StringVar(value='')
         self.Config_Default_RomsetDir_PathChooser.configure(textvariable=self.g_romsetFolderPath, type='directory')
-        self.Config_Default_RomsetDir_PathChooser.grid(column='0', padx='200', pady='10', row='1', sticky='w')
+        self.Config_Default_RomsetDir_PathChooser.grid(column='0', ipadx='90', padx='200', pady='10', row='1', sticky='w')
         self.Config_Default_ExtractArchives = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_extractArchives = tk.IntVar(value='')
         self.Config_Default_ExtractArchives.configure(text='Extract Archives', variable=self.g_extractArchives)
@@ -256,7 +265,7 @@ class EzroApp:
         tooltip.create(self.Config_Default_SortByPrimaryRegion, 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_PrimaryRegionInRoot, '(Only applies if \"Sort Games by Best Region\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
-        tooltip.create(self.Config_Default_IncludeOtherRegions, 'If enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
+        tooltip.create(self.Config_Default_IncludeOtherRegions, '(Only applies to 1G1R export.)\n\nIf enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         tooltip.create(self.Config_Default_IncludeNESPorts, '(Only applies to GBA.)\n\nInclude Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.')
         tooltip.create(self.Config_Default_IncludeGBAVideo, '(Only applies to GBA.)')
         tooltip.create(self.Config_Region_Choice_Name_Label_Tertiary, 'The name of the region group. If \"Sort Games by Best Region\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
@@ -414,23 +423,23 @@ class EzroApp:
         self.Export_DAT_Label_[self.exportTabNum].configure(text='Input No-Intro DAT')
         self.Export_DAT_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Export_DAT_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.datFilePathChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.setSystemDAT(systemName)
         self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file')
-        self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='0', sticky='w')
+        self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='0', sticky='w')
         self.Export_Romset_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_Romset_Label_[self.exportTabNum].configure(text='Input Romset')
         self.Export_Romset_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Export_Romset_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.romsetFolderPathChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.setInputRomsetDir(systemName)
         self.Export_Romset_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romsetFolderPathChoices[self.exportTabNum], type='directory')
-        self.Export_Romset_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='1', sticky='w')
+        self.Export_Romset_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='1', sticky='w')
         self.Export_OutputDir_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_OutputDir_Label_[self.exportTabNum].configure(text='Output Directory')
         self.Export_OutputDir_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Export_OutputDir_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.outputFolderDirectoryChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_OutputDir_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.outputFolderDirectoryChoices[self.exportTabNum], type='directory')
-        self.Export_OutputDir_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='2', sticky='w')
+        self.Export_OutputDir_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='2', sticky='w')
         self.Export_Separator_[self.exportTabNum] = ttk.Separator(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_Separator_[self.exportTabNum].configure(orient='vertical')
         self.Export_Separator_[self.exportTabNum].place(anchor='center', relheight='.95', relx='.5', rely='.5', x='0', y='0')
@@ -448,19 +457,19 @@ class EzroApp:
         self.Export_1G1RRegion_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
         self.Export_1G1RRegion_Combobox_[self.exportTabNum] = ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.regionChoices[self.exportTabNum] = tk.StringVar(value='')
-        self.Export_1G1RRegion_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.regionChoices[self.exportTabNum], values='"Placeholder 1" "Placeholder 2"', width='10')
+        self.Export_1G1RRegion_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.regionChoices[self.exportTabNum], values=[rgn.get() for rgn in self.regionGroupNames], width='15')
         self.Export_1G1RRegion_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='4', sticky='w')
         self.Export_includeOtherRegions_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.includeOtherRegionsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeOtherRegions.get())
         self.Export_includeOtherRegions_[self.exportTabNum].configure(text='Include Games from Other Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
-        self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='250', pady='10', row='4', sticky='w')
+        self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='280', pady='10', row='4', sticky='w')
         self.Export_FromList_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_FromList_Label_[self.exportTabNum].configure(text='Rom List')
         self.Export_FromList_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='5', sticky='w')
         self.Export_FromList_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.romListFileChoices[self.exportTabNum] = tk.StringVar(value='')
         self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file')
-        self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='5', sticky='w')
+        self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='5', sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum] = ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_IncludeUnlicensed_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
         self.includeUnlicensedChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeUnlicensed.get())
@@ -513,7 +522,7 @@ class EzroApp:
         self.Export_RemoveSystem_[self.exportTabNum].configure(text='Remove System')
         self.Export_RemoveSystem_[self.exportTabNum].place(anchor='se', relx='1', rely='1', x='-10', y='-10')
         self.Export_RemoveSystem_[self.exportTabNum].configure(command=self.export_removeSystem)
-        self.Export_ScrolledFrame_[self.exportTabNum].innerframe.configure(relief='groove')
+        # self.Export_ScrolledFrame_[self.exportTabNum].innerframe.configure(relief='groove')
         self.Export_ScrolledFrame_[self.exportTabNum].configure(usemousewheel=True)
         self.Export_ScrolledFrame_[self.exportTabNum].place(anchor='nw', relheight='.9', relwidth='.9', relx='.05', rely='.05', x='0', y='0')
         self.Export_Systems.add(self.Export_ScrolledFrame_[self.exportTabNum], text=systemName)
@@ -539,6 +548,26 @@ class EzroApp:
         self.export_setOutputType()
         self.exportTabNum += 1
 
+    def setSystemDAT(self, systemName):
+        self.datFilePathChoices[self.exportTabNum] = tk.StringVar(value='')
+        alternateSystemNames = systemNamesDict.get(systemName)
+        if alternateSystemNames is not None:
+            for name in alternateSystemNames:
+                currSystemDAT = path.join(self.g_datFilePath.get(), name+".dat").replace("\\", "/")
+                if path.isfile(currSystemDAT):
+                    self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
+                    return
+
+    def setInputRomsetDir(self, systemName):
+        self.romsetFolderPathChoices[self.exportTabNum] = tk.StringVar(value='')
+        alternateSystemNames = systemNamesDict.get(systemName)
+        if alternateSystemNames is not None:
+            for name in alternateSystemNames:
+                currSystemInputDir = path.join(self.g_romsetFolderPath.get(), name).replace("\\", "/")
+                if path.isdir(currSystemInputDir):
+                    self.romsetFolderPathChoices[self.exportTabNum].set(currSystemInputDir)
+                    return
+
     def export_addSystem(self):
         currSystemChoice = self.systemChoice.get()
         if (currSystemChoice != ""):
@@ -554,7 +583,7 @@ class EzroApp:
         if currOutputType == "1G1R":
             self.Export_1G1RRegion_Label_[currIndex].grid(column='0', padx='20', pady='10', row='4', sticky='w')
             self.Export_1G1RRegion_Combobox_[currIndex].grid(column='0', padx='150', pady='10', row='4', sticky='w')
-            self.Export_includeOtherRegions_[currIndex].grid(column='0', padx='250', pady='10', row='4', sticky='w')
+            self.Export_includeOtherRegions_[currIndex].grid(column='0', padx='280', pady='10', row='4', sticky='w')
         else:
             self.Export_1G1RRegion_Label_[currIndex].grid_remove()
             self.Export_1G1RRegion_Combobox_[currIndex].grid_remove()
@@ -1167,7 +1196,7 @@ class EzroApp:
         defaultSettings.optionxform = str
         defaultSettings.read(defaultSettingsFile)
         defaultSettings["General"] = {}
-        defaultSettings["General"]["Input No-Intro DAT Directory"] = self.g_datFilePathChoices.get()
+        defaultSettings["General"]["Input No-Intro DAT Directory"] = self.g_datFilePath.get()
         defaultSettings["General"]["Input Romset Directory"] = self.g_romsetFolderPath.get()
         defaultSettings["Organization"] = {}
         defaultSettings["Organization"]["Extract Archives"] = self.ssch(self.g_extractArchives)
@@ -1197,6 +1226,9 @@ class EzroApp:
         regionSettings["Other"]["Priority Type"] = "Tertiary"
         with open(regionsFile, 'w') as rf:
             regionSettings.write(rf)
+        for i in range(self.exportTabNum):
+            self.Export_1G1RRegion_Combobox_[i].configure(values=[rgn.get() for rgn in self.regionGroupNames])
+            self.regionChoices[i].set("")
 
     def ssch(self, val): # settings_saveChangesHelper
         if val.get():
@@ -1262,9 +1294,9 @@ class EzroApp:
         defaultSettings = configparser.ConfigParser(allow_no_value=True)
         defaultSettings.optionxform = str
         defaultSettings.read(defaultSettingsFile)
-        self.g_datFilePathChoices.set(defaultSettings["General"]["Input No-Intro DAT Directory"])
+        self.g_datFilePath.set(defaultSettings["General"]["Input No-Intro DAT Directory"])
         self.g_romsetFolderPath.set(defaultSettings["General"]["Input Romset Directory"])
-        self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePathChoices, type='directory')
+        self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePath, type='directory')
         self.Config_Default_RomsetDir_PathChooser.configure(textvariable=self.g_romsetFolderPath, type='directory')
         self.g_extractArchives.set(defaultSettings["Organization"]["Extract Archives"] == "True")
         self.g_parentFolder.set(defaultSettings["Organization"]["Export Each Game to Parent Folder"] == "True")
