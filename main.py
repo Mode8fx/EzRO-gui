@@ -290,9 +290,6 @@ class EzroApp:
         self.Export_OutputType_Label_ = []
         self.Export_OutputType_Combobox_ = []
         self.outputTypeChoices = []
-        self.Export_1G1RRegion_Label_ = []
-        self.Export_1G1RRegion_Combobox_ = []
-        self.regionChoices = []
         self.Export_includeOtherRegions_ = []
         self.includeOtherRegionsChoices = []
         self.Export_FromList_Label_ = []
@@ -325,7 +322,6 @@ class EzroApp:
         self.Export_Romset_Label_Tooltip_ = []
         self.Export_OutputDir_Label_Tooltip_ = []
         self.Export_OutputType_Label_Tooltip_ = []
-        self.Export_1G1RRegion_Label_Tooltip_ = []
         self.Export_includeOtherRegions_Tooltip_ = []
         self.Export_FromList_Label_Tooltip_ = []
         self.Export_IncludeUnlicensed_Tooltip_ = []
@@ -371,9 +367,6 @@ class EzroApp:
         self.Export_OutputType_Label_.append(None)
         self.Export_OutputType_Combobox_.append(None)
         self.outputTypeChoices.append(None)
-        self.Export_1G1RRegion_Label_.append(None)
-        self.Export_1G1RRegion_Combobox_.append(None)
-        self.regionChoices.append(None)
         self.Export_includeOtherRegions_.append(None)
         self.includeOtherRegionsChoices.append(None)
         self.Export_FromList_Label_.append(None)
@@ -438,17 +431,10 @@ class EzroApp:
         self.Export_OutputType_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='3', sticky='w')
         self.Export_OutputType_Combobox_[self.exportTabNum].bind('<<ComboboxSelected>>', self.export_setOutputType, add='')
         self.Export_OutputType_Combobox_[self.exportTabNum].current(0)
-        self.Export_1G1RRegion_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.Export_1G1RRegion_Label_[self.exportTabNum].configure(text='Primary Region')
-        self.Export_1G1RRegion_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
-        self.Export_1G1RRegion_Combobox_[self.exportTabNum] = ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.regionChoices[self.exportTabNum] = tk.StringVar(value='')
-        self.Export_1G1RRegion_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.regionChoices[self.exportTabNum], values=[rgn.get() for rgn in self.regionGroupNames], width='15')
-        self.Export_1G1RRegion_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='4', sticky='w')
         self.Export_includeOtherRegions_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.includeOtherRegionsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeOtherRegions.get())
         self.Export_includeOtherRegions_[self.exportTabNum].configure(text='Include Games from Other Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
-        self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='280', pady='10', row='4', sticky='w')
+        self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
         self.Export_FromList_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.Export_FromList_Label_[self.exportTabNum].configure(text='Rom List')
         self.Export_FromList_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='5', sticky='w')
@@ -491,11 +477,11 @@ class EzroApp:
         self.parentFolderChoices[self.exportTabNum] = tk.IntVar(value=self.g_parentFolder.get())
         self.Export_ParentFolder_[self.exportTabNum].configure(text='Export Each Game to Parent Folder', variable=self.parentFolderChoices[self.exportTabNum])
         self.Export_ParentFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.132', x='0', y='0')
-        self.Export_ParentFolder_[self.exportTabNum].configure(command=self.export_toggleSortGames)
         self.Export_SortByPrimaryRegion_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.sortByPrimaryRegionChoices[self.exportTabNum] = tk.IntVar(value=self.g_sortByPrimaryRegion.get())
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(text='Sort Games by Best Region', variable=self.sortByPrimaryRegionChoices[self.exportTabNum])
         self.Export_SortByPrimaryRegion_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
+        self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(command=self.export_togglePrimaryRegionInRoot)
         self.Export_PrimaryRegionInRoot_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
         self.primaryRegionInRootChoices[self.exportTabNum] = tk.IntVar(value=self.g_primaryRegionInRoot.get())
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Keep Games from Primary Regions in Root', variable=self.primaryRegionInRootChoices[self.exportTabNum])
@@ -515,8 +501,7 @@ class EzroApp:
         tooltip.create(self.Export_DAT_Label_[self.exportTabNum], 'The No-Intro DAT file for the current system. This contains information about each rom, which is used in both exporting and auditing.\n\nNot needed for the \"Favorites\" output type.')
         tooltip.create(self.Export_Romset_Label_[self.exportTabNum], 'The directory containing your roms for the current system.')
         tooltip.create(self.Export_OutputDir_Label_[self.exportTabNum], 'The directory that your roms will be exported to. Ideally, this should be named after the current system.')
-        tooltip.create(self.Export_OutputType_Label_[self.exportTabNum], '\"All\": All roms will be exported.\n\n\"1G1R\" (1 Game 1 Rom): Only the latest revision of a single region of your choice of each game will be exported (e.g. USA Revision 2).\n\n\"Favorites\": Only specific roms from a provided text file will be exported; good for exporting a list of only your favorite roms.')
-        tooltip.create(self.Export_1G1RRegion_Label_[self.exportTabNum], 'The region used for the 1G1R export.')
+        tooltip.create(self.Export_OutputType_Label_[self.exportTabNum], '\"All\": All roms will be exported.\n\n\"1G1R\" (1 Game 1 Rom): Only the latest revision of the highest-priority region group of each game will be exported (e.g. USA Revision 2). See "Region Settings" in Config for more information.\n\n\"Favorites\": Only specific roms from a provided text file will be exported; good for exporting a list of only your favorite roms.')
         tooltip.create(self.Export_includeOtherRegions_[self.exportTabNum], 'If enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         tooltip.create(self.Export_FromList_Label_[self.exportTabNum], 'The text list containing your favorite roms for the current system.')
         tooltip.create(self.Export_IncludeNESPorts_[self.exportTabNum], 'Include Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.\n\nIf unsure, leave this disabled.')
@@ -532,6 +517,7 @@ class EzroApp:
             self.Export_IncludeNESPorts_[self.exportTabNum].grid_remove()
             self.Export_IncludeGBAVideo_[self.exportTabNum].grid_remove()
         self.export_setOutputType()
+        self.export_togglePrimaryRegionInRoot()
         self.exportTabNum += 1
 
     def setSystemDAT(self, systemName):
@@ -591,12 +577,8 @@ class EzroApp:
         currIndex = self.Export_Systems.index(self.Export_Systems.select())
         currOutputType = self.outputTypeChoices[currIndex].get()
         if currOutputType == "1G1R":
-            self.Export_1G1RRegion_Label_[currIndex].grid(column='0', padx='20', pady='10', row='4', sticky='w')
-            self.Export_1G1RRegion_Combobox_[currIndex].grid(column='0', padx='150', pady='10', row='4', sticky='w')
-            self.Export_includeOtherRegions_[currIndex].grid(column='0', padx='280', pady='10', row='4', sticky='w')
+            self.Export_includeOtherRegions_[currIndex].grid(column='0', padx='20', pady='10', row='4', sticky='w')
         else:
-            self.Export_1G1RRegion_Label_[currIndex].grid_remove()
-            self.Export_1G1RRegion_Combobox_[currIndex].grid_remove()
             self.Export_includeOtherRegions_[currIndex].grid_remove()
         if currOutputType == "Favorites":
             self.Export_FromList_Label_[currIndex].grid(column='0', padx='20', pady='10', row='5', sticky='w')
@@ -605,8 +587,12 @@ class EzroApp:
             self.Export_FromList_Label_[currIndex].grid_remove()
             self.Export_FromList_PathChooser_[currIndex].grid_remove()
 
-    def export_toggleSortGames(self):
-        pass
+    def export_togglePrimaryRegionInRoot(self):
+        currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
+        if self.sortByPrimaryRegionChoices[currSystemIndex].get():
+            self.Export_PrimaryRegionInRoot_[currSystemIndex].configure(state='enabled')
+        else:
+            self.Export_PrimaryRegionInRoot_[currSystemIndex].configure(state='disabled')
 
     def export_removeSystem(self):
         currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
@@ -628,9 +614,6 @@ class EzroApp:
         self.Export_OutputType_Label_.pop(currSystemIndex)
         self.Export_OutputType_Combobox_.pop(currSystemIndex)
         self.outputTypeChoices.pop(currSystemIndex)
-        self.Export_1G1RRegion_Label_.pop(currSystemIndex)
-        self.Export_1G1RRegion_Combobox_.pop(currSystemIndex)
-        self.regionChoices.pop(currSystemIndex)
         self.Export_includeOtherRegions_.pop(currSystemIndex)
         self.includeOtherRegionsChoices.pop(currSystemIndex)
         self.Export_FromList_Label_.pop(currSystemIndex)
@@ -668,15 +651,15 @@ class EzroApp:
             self.Export_Systems.select(currSystemIndex - 1)
 
     def export_auditSystem(self):
-        currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
-        if self.auditCheck(currSystemIndex):
-            if self.exportTabNum > 0:
+        if self.exportTabNum > 0:
+            currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
+            if self.auditCheck(currSystemIndex):
                 self.openAuditWindow(numSystems=1, systemIndexList=currSystemIndex)
 
     def export_auditAllSystems(self):
-        allSystemIndices = list(range(self.exportTabNum))
-        if self.auditCheck(allSystemIndices):
-            if self.exportTabNum > 0:
+        if self.exportTabNum > 0:
+            allSystemIndices = list(range(self.exportTabNum))
+            if self.auditCheck(allSystemIndices):
                 self.openAuditWindow(numSystems=len(allSystemIndices), systemIndexList=allSystemIndices)
 
     def auditCheck(self, systemIndices):
@@ -692,9 +675,11 @@ class EzroApp:
             else:
                 tree = ET.parse(currSystemDAT)
                 treeRoot = tree.getroot()
-                firstGameName = treeRoot[1].get("name")
-                if firstGameName is None or firstGameName == "":
+                systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
+                if systemNameFromDAT is None or systemNameFromDAT == "":
                     failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                if systemNameFromDAT != currSystemName:
+                    failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
             if currSystemFolder == "":
                 failureMessage += currSystemName+": Missing input romset.\n"
             elif not path.isdir(currSystemFolder):
@@ -758,10 +743,113 @@ class EzroApp:
             self.Audit_Window.destroy()
 
     def export_exportSystem(self):
-        pass
+        if self.exportTabNum > 0:
+            currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
+            if self.exportCheck(currSystemIndex):
+                self.openExportWindow(numSystems=1, systemIndexList=currSystemIndex)
 
     def export_exportAllSystems(self):
-        pass
+        if self.exportTabNum > 0:
+            allSystemIndices = list(range(self.exportTabNum))
+            if self.exportCheck(allSystemIndices):
+                self.openExportWindow(numSystems=len(allSystemIndices), systemIndexList=allSystemIndices)
+
+    def exportCheck(self, systemIndices):
+        failureMessage = ""
+        for ind in systemIndices:
+            currSystemName = self.exportSystemNames[ind]
+
+            currSystemDAT = self.datFilePathChoices[ind].get()
+            if currSystemDAT == "":
+                failureMessage += currSystemName+": Missing DAT file.\n"
+            elif not path.isfile(currSystemDAT):
+                failureMessage += currSystemName+": Invalid DAT file (file not found).\n"
+            else:
+                tree = ET.parse(currSystemDAT)
+                treeRoot = tree.getroot()
+                systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
+                if systemNameFromDAT is None or systemNameFromDAT == "":
+                    failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                if systemNameFromDAT != currSystemName:
+                    failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
+
+            currSystemFolder = self.romsetFolderPathChoices[ind].get()
+            if currSystemFolder == "":
+                failureMessage += currSystemName+": Missing input romset.\n"
+            elif not path.isdir(currSystemFolder):
+                failureMessage += currSystemName+": Invalid input romset (directory not found).\n"
+
+            currOutputFolder = self.outputFolderDirectoryChoices[ind].get()
+            if currOutputFolder == "":
+                failureMessage += currSystemName+": Missing output directory.\n"
+            elif not path.isdir(currOutputFolder):
+                failureMessage += currSystemName+": Invalid output directory (directory not found).\n"
+
+            currOutputType = self.outputTypeChoices[ind].get()
+            if currOutputType == "Favorites":
+                currFavoritesList = self.romListFileChoices[ind].get()
+                if currFavoritesList == "":
+                    failureMessage += currSystemName+": Missing Favorites rom list.\n"
+                elif not path.isfile(currFavoritesList):
+                    failureMessage += currSystemName+": Invalid Favorites rom list (file not found).\n"
+
+        if failureMessage == "":
+            return True
+        showinfo("Invalid Parameters", "Please fix the following issues before attempting an export:\n\n"+failureMessage.strip())
+        return False
+
+    def openExportWindow(self, numSystems, systemIndexList):
+        self.systemIndexList = systemIndexList
+        self.exportInProgress = False
+        self.Export_Window = Toplevel()
+        self.Export_Window.title("EzRO Export")
+        self.Export_Frame = ttk.Frame(self.Export_Window)
+        self.Export_MainProgress_Label = ttk.Label(self.Export_Frame)
+        if numSystems == 1:
+            self.Export_MainProgress_Label.configure(text='Preparing to export system: '+self.exportSystemNames[systemIndexList[0]])
+        else:
+            self.Export_MainProgress_Label.configure(text='Preparing to export '+str(numSystems)+' systems')
+        self.Export_MainProgress_Label.place(anchor='center', relx='.5', rely='.05', x='0', y='0')
+        self.Export_MainProgress_Bar = ttk.Progressbar(self.Export_Frame)
+        self.Export_MainProgress_Bar.configure(maximum=numSystems, orient='horizontal')
+        self.Export_MainProgress_Bar.place(anchor='center', relwidth='.9', relx='.5', rely='.11', x='0', y='0')
+        self.Export_SubProgress_Bar = ttk.Progressbar(self.Export_Frame)
+        self.Export_SubProgress_Bar.configure(maximum='100', orient='horizontal')
+        self.Export_SubProgress_Bar.place(anchor='center', relwidth='.9', relx='.5', rely='.17', x='0', y='0')
+        self.SubProgress_TextField = tk.Text(self.Export_Frame)
+        self.SubProgress_TextField.configure(autoseparators='true', blockcursor='false', height='10', insertontime='0')
+        self.SubProgress_TextField.configure(insertwidth='0', state='disabled', tabstyle='tabular', takefocus=False)
+        self.SubProgress_TextField.configure(width='50', wrap='word')
+        self.SubProgress_TextField.place(anchor='n', relheight='.62', relwidth='.9', relx='.5', rely='.23', x='0', y='0')
+        self.Export_StartButton = ttk.Button(self.Export_Frame)
+        self.export_startButtonText = tk.StringVar(value='Start Export')
+        self.Export_StartButton.configure(text='Start Export', textvariable=self.export_startButtonText)
+        self.Export_StartButton.place(anchor='center', relx='.4', rely='.925', x='0', y='0')
+        self.Export_StartButton.configure(command=self.export_startExport)
+        self.Export_CancelButton = ttk.Button(self.Export_Frame)
+        self.export_cancelButtonText = tk.StringVar(value='Cancel')
+        self.Export_CancelButton.configure(text='Cancel', textvariable=self.export_cancelButtonText)
+        self.Export_CancelButton.place(anchor='center', relx='.6', rely='.925', x='0', y='0')
+        self.Export_CancelButton.configure(command=self.export_cancelExport)
+        self.Export_Frame.configure(height='200', width='200')
+        self.Export_Frame.place(anchor='nw', relheight='1', relwidth='1', relx='0', rely='0', x='0', y='0')
+        self.Export_Window.configure(height='600', width='800')
+        self.Export_Window.grab_set()
+        self.Export_Window.protocol("WM_DELETE_WINDOW", self.export_cancelExport)
+
+    def export_startExport(self):
+        self.Export_StartButton.configure(state='disabled')
+        # self.updateAndAuditVerifiedRomsets(self.systemIndexList) # TODO: Start the export here!
+
+    def export_cancelExport(self):
+        # Cancelling an export early causes an error in tkinter (writing to a progressbar/text field/etc. that no longer exists) but it doesn't actually affect anything
+        if self.exportInProgress:
+            if askyesno("EzRO Export", "Cancel the export?"):
+                self.exportInProgress = False
+                self.Export_Window.destroy()
+        else:
+            self.exportInProgress = False
+            self.Export_Window.destroy()
 
     def export_auditHelp(self):
         showinfo("Audit Help",
@@ -769,9 +857,14 @@ class EzroApp:
             +"\n\nThis also creates a log file indicating which roms exist in the romset, which roms are missing, and which roms are in the set that don't match anything from the DAT."
             +"\n\nIt is highly recommended that you audit a system directory whenever you update that system's No-Intro DAT.")
 
-    ##################
-    # EXPORT (Logic) #
-    ##################
+    def writeTextToSubProgress(self, text):
+        self.SubProgress_TextField.configure(state='normal')
+        self.SubProgress_TextField.insert(tk.END, text)
+        self.SubProgress_TextField.configure(state='disabled')
+
+    #################
+    # AUDIT (Logic) #
+    #################
 
     def updateAndAuditVerifiedRomsets(self, systemIndices):
         global allGameNamesInDAT, romsWithoutCRCMatch, progressBar, recentlyVerified
@@ -996,10 +1089,11 @@ class EzroApp:
 
 
 
-    def writeTextToSubProgress(self, text):
-        self.SubProgress_TextField.configure(state='normal')
-        self.SubProgress_TextField.insert(tk.END, text)
-        self.SubProgress_TextField.configure(state='disabled')
+    ##################
+    # EXPORT (Logic) #
+    ##################
+
+
 
     #############
     # FAVORITES #
@@ -1263,9 +1357,6 @@ class EzroApp:
         regionSettings["Other"]["Priority Type"] = "Tertiary"
         with open(regionsFile, 'w') as rf:
             regionSettings.write(rf)
-        for i in range(self.exportTabNum):
-            self.Export_1G1RRegion_Combobox_[i].configure(values=[rgn.get() for rgn in self.regionGroupNames])
-            self.regionChoices[i].set("")
 
     def ssch(self, val): # settings_saveChangesHelper
         if val.get():

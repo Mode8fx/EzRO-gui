@@ -115,3 +115,5 @@ dmypy.json
 
 Planning/
 Logs/
+regions.ini
+settings.ini
