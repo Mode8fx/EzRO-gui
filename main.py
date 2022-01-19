@@ -265,7 +265,7 @@ class EzroApp:
         tooltip.create(self.Config_Default_RomsetDir_Label, 'The directory containing your rom directories for each system.\n\nIf this is provided, the \"Export\" tab will attempt to automatically match folders from this directory with each system so you don\'t have to input them manually.')
         tooltip.create(self.Config_Default_ExtractArchives, 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_ParentFolder, 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
-        tooltip.create(self.Config_Default_SortByPrimaryRegion, 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Config_Default_SortByPrimaryRegion, 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_PrimaryRegionInRoot, '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_SpecialCategoryFolder, 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
@@ -354,7 +354,7 @@ class EzroApp:
         self.regionGroupNames = []
         self.Config_Region_Choice_Type_Label_ = []
         self.Config_Region_Choice_Type_Combobox_ = []
-        self.priorityTypes = []
+        self.regionPriorityTypes = []
         self.Config_Region_Choice_Tags_Label_ = []
         self.Config_Region_Choice_Tags_Entry_ = []
         self.regionTags = []
@@ -479,7 +479,7 @@ class EzroApp:
         tooltip.create(self.Export_IncludeNESPorts_[self.exportTabNum], 'Include Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
-        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_SpecialCategoryFolder_[self.exportTabNum], 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
@@ -1068,7 +1068,452 @@ class EzroApp:
     # EXPORT (Logic) #
     ##################
 
+    def mainExport(self, systemIndices):
+        global currSystemName, currSystemSourceFolder, currSystemTargetFolder, currSystemDAT, romsetCategory
+        global includeOtherRegions, includeUnlicensed, includeUnreleased, includeCompilations, includeGBAVideo, includeNESPorts
+        global extractArchives, exportToGameParentFolder, sortByPrimaryRegion, primaryRegionInRoot, specialCategoryFolder, overwriteDuplicates
+        global ignoredFolders, primaryRegions
+        global export_regionGroupNames, export_regionPriorityTypes, export_regionTags
 
+        if not self.recentlyVerified:
+            if not askyesno("EzRO Export", "If you haven't done so already, it is recommended that you update/audit your romsets whenever you export (or if this is your first time running EzRO). This will make sure your rom names match those in the No-Intro DAT files.\n\nContinue with export?"):
+                return
+
+        export_regionGroupNames = self.regionGroupNames + [self.regionGroupTertiary]
+        for i in range(len(export_regionGroupNames)):
+            export_regionGroupNames[i] = export_regionGroupNames[i].get()
+        export_regionPriorityTypes = self.regionPriorityTypes + [tk.StringVar(value="Secondary")]
+        for i in range(len(export_regionPriorityTypes)):
+            export_regionPriorityTypes[i] = export_regionPriorityTypes[i].get()
+        export_regionTags = self.regionTags[:]
+        tertiaryTags = []
+        # Not needed
+        # for regionTag in ["World", "U", "USA", "E", "Europe", "United Kingdom", "En", "A", "Australia", "Ca", "Canada", "J", "Japan", "Ja", "F", "France", "Fr", "G", "Germany", "De", "S", "Spain", "Es", "I", "Italy", "It", "No", "Norway", "Br", "Brazil", "Sw", "Sweden", "Cn", "China", "Zh", "K", "Korea", "Ko", "As", "Asia", "Ne", "Netherlands", "Ru", "Russia", "Da", "Denmark", "Nl", "Pt", "Sv", "No", "Da", "Fi", "Pl"]:
+        #     addToTertiary = True
+        #     for rtGroup in self.regionTags:
+        #         if regionTag in self.commaSplit(rtGroup.get()):
+        #             addToTertiary = False
+        #             break
+        #     if addToTertiary:
+        #         tertiaryTags.append(regionTag)
+        export_regionTags.append(tk.StringVar(value=", ".join(tertiaryTags)))
+        for i in range(len(export_regionTags)):
+            export_regionTags[i] = export_regionTags[i].get()
+
+        numCopiedBytesMain = 0
+        for currIndex in systemIndices:
+            currSystemName = self.exportSystemNames[currIndex]
+            if self.isExport:
+                self.Export_MainProgress_Label.configure(text='Exporting system: '+currSystemName)
+            else:
+                self.Export_MainProgress_Label.configure(text='Testing export of system: '+currSystemName)
+            self.writeTextToSubProgress("====================\n\n"+currSystemName+"\n")
+            currSystemDAT = self.datFilePathChoices[currIndex].get()
+            currSystemSourceFolder = self.romsetFolderPathChoices[currIndex].get()
+            currSystemTargetFolder = self.outputFolderDirectoryChoices[currIndex].get()
+            romsetCategory = self.outputTypeChoices[currIndex].get()
+            includeOtherRegions = self.includeOtherRegionsChoices[currIndex].get()
+            includeUnlicensed = self.includeUnlicensedChoices[currIndex].get()
+            includeUnreleased = self.includeUnreleasedChoices[currIndex].get()
+            includeCompilations = self.includeCompilationsChoices[currIndex].get()
+            includeTestPrograms = self.includeTestProgramsChoices[currIndex].get()
+            includeBIOS = self.includeBIOSChoices[currIndex].get()
+            includeNESPorts = self.includeNESPortsChoices[currIndex].get()
+            includeGBAVideo = self.includeGBAVideoChoices[currIndex].get()
+            extractArchives = self.extractArchivesChoices[currIndex].get()
+            exportToGameParentFolder = self.parentFolderChoices[currIndex].get()
+            sortByPrimaryRegion = self.sortByPrimaryRegionChoices[currIndex].get()
+            primaryRegionInRoot = self.primaryRegionInRootChoices[currIndex].get()
+            specialCategoryFolder = self.specialCategoryFolderChoices[currIndex].get()
+            overwriteDuplicates = self.overwriteDuplicatesChoices[currIndex].get()
+            ignoredFolders = []
+            if not includeUnlicensed:
+                ignoredFolders.append("Unlicensed")
+            if not includeUnreleased:
+                ignoredFolders.append("Unreleased")
+            if not includeCompilations:
+                ignoredFolders.append("Compilation")
+            if not includeTestPrograms:
+                ignoredFolders.append("Test Program")
+            if not includeBIOS:
+                ignoredFolders.append("BIOS")
+            if not includeNESPorts:
+                ignoredFolders.append("NES & Famicom")
+            if not includeGBAVideo:
+                ignoredFolders.append("GBA Video")
+            primaryRegions = []
+            for i in range(len(export_regionGroupNames)):
+                if export_regionPriorityTypes[i] == "Primary":
+                    primaryRegions.append(export_regionGroupNames[i])
+            self.checkSystemDATForClones()
+            self.generateGameRomDict(currIndex)
+            numCopiedBytesMain += self.copyMainRomset(currIndex)
+        self.writeTextToSubProgress("====================\n\nTotal Export Size: "+simplifyNumBytes(numCopiedBytesMain)+"\n\n")
+        self.writeTextToSubProgress("Review the log files for more information on what files "+("were" if self.isExport else "would be")+" transferred.\n")
+        self.writeTextToSubProgress("Log files are not created for systems that "+("do" if self.isExport else "would")+" not receive any new files.\n\n")
+        self.recentlyVerified = True
+        self.writeTextToSubProgress("Done.")
+        if self.isExport:
+            self.Export_MainProgress_Label.configure(text="Export complete.")
+        else:
+            self.Export_MainProgress_Label.configure(text="Test export complete.")
+        self.export_cancelButtonText.set("Finish")
+        self.exportInProgress = False
+
+    def checkSystemDATForClones(self):
+        global currSystemHasClones
+        tempTree = ET.parse(currSystemDAT)
+        tempTreeRoot = tempTree.getroot()
+        tempAllGameFields = tempTreeRoot[1:]
+        for game in tempAllGameFields:
+            gameName = game.get("name")
+            try:
+                gameCloneOf = game.get("cloneof")
+            except:
+                gameCloneOf = None
+            if gameCloneOf is not None:
+                currSystemHasClones = True
+                return
+        currSystemHasClones = False
+
+    def generateGameRomDict(self, currIndex):
+        global gameRomDict, newGameRomDict, allGameFields
+        gameRomDict = {}
+        tree = ET.parse(currSystemDAT)
+        treeRoot = tree.getroot()
+        allGameFields = treeRoot[1:]
+        gameNameToCloneOf = {}
+        for game in allGameFields:
+            gameName = game.get("name")
+            try:
+                gameCloneOf = game.get("cloneof")
+            except:
+                gameCloneOf = None
+            gameNameToCloneOf[gameName] = gameCloneOf
+        for file in listdir(currSystemSourceFolder):
+            _, _, _, currRegionType = self.getRomsInBestRegion([path.splitext(file)[0]])
+            if currRegionType != "Primary" and romsetCategory == "1G1R" and not includeOtherRegions:
+                continue
+            romName = path.splitext(file)[0]
+            if romName in gameNameToCloneOf:
+                parent = gameNameToCloneOf[romName]
+                if parent is None:
+                    self.addGameAndRomToDict(romName, file)
+                else:
+                    self.addGameAndRomToDict(parent, file)
+        # Rename gameRomDict keys according to best game name
+        newGameRomDict = {}
+        for game in gameRomDict.keys():
+            bestGameName = self.getBestGameName(gameRomDict[game])
+            mergeBoth = False
+            if bestGameName in newGameRomDict: # same name for two different games (Pokemon Stadium International vs. Japan)
+                finalFirstGameName, finalSecondGameName, renameByAtts = self.fixDuplicateName(newGameRomDict[bestGameName], gameRomDict[game], bestGameName)
+                if renameByAtts: # rename first game according to region
+                    newGameRomDict[finalFirstGameName] = newGameRomDict.pop(bestGameName)
+                    newGameRomDict[finalSecondGameName] = gameRomDict[game]
+                else: # rename neither (merge the two together); rare, but possible, such as DS demos that have both a DS Download Station and a Nintendo Channel version
+                    for rom in gameRomDict[game]: # rename one or both games according to 
+                        newGameRomDict[bestGameName].append(rom)
+            else:
+                newGameRomDict[bestGameName] = gameRomDict[game]
+        gameRomDict = newGameRomDict
+
+    def getRomsInBestRegion(self, roms):
+        romsInBestRegion = []
+        bestRegionIndex = 99
+        bestRegion = None
+        bestRegionType = 0
+        for rom in roms:
+            attributeSplit = self.getAttributeSplit(rom)
+            for i in range(len(export_regionGroupNames)):
+                region = export_regionGroupNames[i]
+                currRegionAtts = self.commaSplit(export_regionTags[i])
+                regionType = (2 if export_regionPriorityTypes[i]=="Primary" else 1)
+                if arrayOverlap(attributeSplit, currRegionAtts) or i==len(export_regionGroupNames)-1:
+                    if regionType >= bestRegionType:
+                        if i < bestRegionIndex or regionType > bestRegionType:
+                            bestRegionIndex = i
+                            romsInBestRegion = [rom]
+                            bestRegion = region
+                            bestRegionType = regionType
+                        elif i == bestRegionIndex:
+                            romsInBestRegion.append(rom)
+                        if regionType == 2:
+                            break
+        bestRegionType = (None, "Secondary", "Primary")[bestRegionType]
+        return romsInBestRegion, bestRegionIndex, bestRegion, bestRegionType
+
+    def getAttributeSplit(self, name):
+        mna = [s.strip() for s in re.split('\(|\)|\[|\]', path.splitext(name)[0]) if s.strip() != ""]
+        if name.startswith("[BIOS]") and len(mna) > 1:
+            mna[:2] = ["[BIOS] "+mna[1]]
+        mergeNameArray = []
+        mergeNameArray.append(mna[0])
+        if len(mna) > 1:
+            for i in range(1, len(mna)):
+                if not ("," in mna[i] or "+" in mna[i]):
+                    mergeNameArray.append(mna[i])
+                else:
+                    arrayWithComma = [s.strip() for s in re.split('\,|\+', mna[i]) if s.strip() != ""]
+                    for att2 in arrayWithComma:
+                        mergeNameArray.append(att2)
+        return mergeNameArray
+
+    def commaSplit(self, string):
+        if string.strip() == "":
+            return [] # otherwise, it would return [""]
+        return [s.strip() for s in string.split(",")]
+
+    def barSplit(self, string):
+        if string.strip() == "":
+            return [] # otherwise, it would return [""]
+        return [s.strip() for s in string.split("|")]
+
+    def addGameAndRomToDict(self, game, rom):
+        global gameRomDict
+        if game not in gameRomDict.keys():
+            gameRomDict[game] = []
+        gameRomDict[game].append(rom)
+
+    def getBestGameName(self, roms):
+        bestRom, _, _ = self.getBestRom(roms)
+        atts = self.getAttributeSplit(bestRom)
+        return atts[0].rstrip(".")
+
+    def getBestRom(self, roms):
+        romsInBestRegion, _, bestRegion, bestRegionType = self.getRomsInBestRegion(roms)
+        if len(romsInBestRegion) == 1:
+            return romsInBestRegion[0], bestRegion, bestRegionType
+        bestScore = -500
+        bestRom = ""
+        for rom in romsInBestRegion:
+            currScore = self.getScore(rom)
+            if currScore >= bestScore:
+                bestScore = currScore
+                bestRom = rom
+        return bestRom, bestRegion, bestRegionType
+
+    def getScore(self, rom):
+        attributes = self.getAttributeSplit(rom)[1:]
+        score = 100
+        lastVersion = 0
+        for att in attributes:
+            if att.startswith("Rev") or att.startswith("Reprint"):
+                try:
+                    score += 15 + (15 * int(att.split()[1]))
+                except:
+                    score += 30
+            elif att.startswith("v") and len(att) > 1 and att[1].isdigit():
+                try:
+                    score += float(att[1:])
+                    lastVersion = float(att[1:])
+                except:
+                    score += lastVersion
+            elif att.startswith("b") and (len(att) == 1 or att[1].isdigit()):
+                if len(att) == 1:
+                    score -= 30
+                else:
+                    try:
+                        score -= (15 - float(att[1:]))
+                        lastVersion = float(att[1:])
+                    except:
+                        score -= (15 - lastVersion)
+            elif att.startswith("Beta") or att.startswith("Proto"):
+                try:
+                    score -= (50 - int(att.split()[1]))
+                except:
+                    score -= 49
+            elif att.startswith("Sample") or att.startswith("Demo"):
+                try:
+                    score -= (90 - int(att.split()[1]))
+                except:
+                    score -= 89
+            elif "Collection" in att:
+                score -= 10
+            elif att in self.g_specificAttributes:
+                score -= 10
+            elif "DLC" in att:
+                score -= 10
+            elif att in ["Unl", "Pirate"]:
+                score -= 20
+            elif not (att in self.g_specificAttributes or any(att.startswith(starter) for starter in self.g_generalAttributes)): # a tiebreaker for any new keywords that are later added
+                score -= 1
+        return score
+
+    def fixDuplicateName(self, firstGameRoms, secondGameRoms, sharedName):
+        global newGameRomDict
+        firstBestRoms, firstRegionNum, _, _ = self.getRomsInBestRegion(firstGameRoms)
+        secondBestRoms, secondRegionNum, _, _ = self.getRomsInBestRegion(secondGameRoms)
+        if currSystemHasClones and (firstRegionNum != secondRegionNum):
+            newFirstGameName = sharedName+" ("+export_regionGroupNames[firstRegionNum]+")"
+            newSecondGameName = sharedName+" ("+export_regionGroupNames[secondRegionNum]+")"
+            return newFirstGameName, newSecondGameName, True
+        else:
+            firstUniqueAtts, secondUniqueAtts = self.getUniqueAttributes(self.getBestRom(firstBestRoms)[0], self.getBestRom(secondBestRoms)[0])
+            if len(firstUniqueAtts) > 0 or len(secondUniqueAtts) > 0:
+                newFirstGameName = sharedName
+                for att in firstUniqueAtts:
+                    newFirstGameName += " ("+att+")"
+                newSecondGameName = sharedName
+                for att in secondUniqueAtts:
+                    newSecondGameName += " ("+att+")"
+                return newFirstGameName, newSecondGameName, True
+            else:
+                return None, None, False
+
+    def getUniqueAttributes(self, firstRom, secondRom):
+        firstAtts = self.getAttributeSplit(firstRom)
+        firstAtts.pop(0)
+        secondAtts = self.getAttributeSplit(secondRom)
+        secondAtts.pop(0)
+        firstUniqueAtts = []
+        tempStarters = self.g_generalAttributes[:]
+        try:
+            tempStarters.remove("Proto") # Exerion
+        except:
+            pass
+        for att in firstAtts:
+            if att in secondAtts or att in self.g_specificAttributes or self.attIsRegion(att):
+                continue
+            if att.startswith("v") and len(att) > 1 and att[1].isdigit():
+                continue
+            if att.startswith("b") and (len(att) == 1 or att[1].isdigit()):
+                continue
+            if not any(att.startswith(starter) for starter in tempStarters):
+                firstUniqueAtts.append(att)
+        secondUniqueAtts = []
+        for att in secondAtts:
+            if att in firstAtts or att in self.g_specificAttributes or self.attIsRegion(att):
+                continue
+            if att.startswith("v") and len(att) > 1 and att[1].isdigit():
+                continue
+            if att.startswith("b") and (len(att) == 1 or att[1].isdigit()):
+                continue
+            if not any(att.startswith(starter) for starter in tempStarters):
+                secondUniqueAtts.append(att)
+        if ("Proto" in firstUniqueAtts + secondUniqueAtts) and (len(firstUniqueAtts) + len(secondUniqueAtts) > 1):
+            if "Proto" in firstUniqueAtts:
+                firstUniqueAtts.remove("Proto")
+            elif "Proto" in secondUniqueAtts:
+                secondUniqueAtts.remove("Proto")
+        return firstUniqueAtts, secondUniqueAtts
+
+    def attIsRegion(self, att):
+        for tags in export_regionTags:
+            if att in self.commaSplit(tags):
+                return True
+        return False
+
+    def copyMainRomset(self, currIndex):
+        global gameRomDict, currGameFolder
+        numGames = len(gameRomDict.keys())
+        self.romsCopied = []
+        self.numRomsSkipped = 0
+        self.romsFailed = []
+        self.currNumCopiedBytes = 0
+        self.Export_SubProgress_Bar.configure(maximum=str(numGames))
+        self.Export_SubProgress_Bar['value'] = 0
+        for game in gameRomDict.keys():
+            self.Export_SubProgress_Bar['value'] += 1
+            tk_root.update()
+            bestRom, bestRegion, bestRegionType = self.getBestRom(gameRomDict[game])
+            bestRegionIsPrimary = (bestRegionType == "Primary")
+            currSpecialFolders = self.getSpecialFolders(bestRom)
+            if arrayOverlap(currSpecialFolders, ignoredFolders):
+                continue
+            # Start building output path according to attributes
+            currGameFolder = currSystemTargetFolder
+            if sortByPrimaryRegion and (not (bestRegionIsPrimary and primaryRegionInRoot)):
+                currGameFolder = path.join(currGameFolder, "["+bestRegion+"]")
+            if specialCategoryFolder:
+                for folder in currSpecialFolders:
+                    currGameFolder = path.join(currGameFolder, "["+folder+"]")
+            if exportToGameParentFolder:
+                currGameFolder = path.join(currGameFolder, game)
+            if romsetCategory == "All":
+                for rom in gameRomDict[game]:
+                    self.copyRomToTarget(rom)
+            elif romsetCategory == "1G1R" or bestRegionIsPrimary:
+                self.copyRomToTarget(bestRom)
+        self.createMainCopiedLog(currIndex, "Export" if self.isExport else "Test")
+        if self.isExport:
+            self.writeTextToSubProgress("Copied "+str(len(self.romsCopied))+" new files.\n")
+            self.writeTextToSubProgress("Skipped "+str(self.numRomsSkipped)+" files that already exist on this device.\n")
+            self.writeTextToSubProgress("Failed to copy "+str(len(self.romsFailed))+" new files.\n")
+        else:
+            self.writeTextToSubProgress(str(len(self.romsCopied))+" new files would be copied.\n")
+            self.writeTextToSubProgress(str(self.numRomsSkipped)+" old files would be skipped.\n")
+        self.writeTextToSubProgress("Export Size: "+simplifyNumBytes(self.currNumCopiedBytes)+"\n\n")
+        return self.currNumCopiedBytes
+
+    def copyRomToTarget(self, rom):
+        sourceRomPath = path.join(currSystemSourceFolder, rom)
+        targetRomPath = path.join(currGameFolder, rom)
+        if overwriteDuplicates or (not self.targetExists(sourceRomPath, targetRomPath)):
+            try:
+                createdFolder = self.isExport and createDir(currGameFolder)
+                if zipfile.is_zipfile(sourceRomPath) and extractArchives:
+                    with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                        if self.isExport:
+                            zippedFile.extract(zippedFile.namelist()[0], path.dirname(targetRomPath))
+                        self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
+                else:
+                    if self.isExport:
+                        shutil.copy(sourceRomPath, targetRomPath)
+                        self.currNumCopiedBytes += path.getsize(targetRomPath)
+                    else:
+                        self.currNumCopiedBytes += path.getsize(sourceRomPath)
+                self.romsCopied.append(rom)
+            except:
+                # progressBar.write("\nFailed to copy: "+rom)
+                if createdFolder and len(listdir(currGameFolder)) == 0:
+                    rmdir(currGameFolder)
+                self.romsFailed.append(rom)
+        else:
+            self.numRomsSkipped += 1
+
+    def targetExists(self, sourceRomPath, targetRomPath):
+        if not (extractArchives and zipfile.is_zipfile(sourceRomPath)):
+            return path.isfile(targetRomPath)
+        with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+            tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
+        return path.isfile(tempTargetRomPath)
+
+    def getSpecialFolders(self, rom):
+        currSpecialFolders = []
+        if "[BIOS]" in rom:
+            currSpecialFolders.append("BIOS")
+        if "(Unl" in rom or "(Pirate" in rom:
+            currSpecialFolders.append("Unlicensed")
+        if "(Test Program" in rom or "(SDK Build" in rom or "Production Test Program" in rom:
+            currSpecialFolders.append("Test Program")
+        if "(Proto" in rom:
+            currSpecialFolders.append("Unreleased")
+        # if "(Sample" in rom or "(Demo" in rom:
+        #     currSpecialFolders.append("Demo")
+        for keyword in self.barSplit(defaultSettings["Keywords"]["Compilation"]):
+            if keyword in rom:
+                currSpecialFolders.append("Compilation")
+                break
+        if "Classic NES Series" in rom or "Famicom Mini" in rom or "Hudson Best Collection" in rom or "Kunio-kun Nekketsu Collection" in rom:
+            currSpecialFolders.append("NES & Famicom")
+        if "Game Boy Advance Video" in rom:
+            currSpecialFolders.append("GBA Video")
+        return currSpecialFolders
+
+    def createMainCopiedLog(self, currIndex, logType="Export"):
+        if len(self.romsCopied) + len(self.romsFailed) > 0:
+            self.romsCopied.sort()
+            self.romsFailed.sort()
+            romsetLogFile = open(path.join(logFolder, logType+" Main ("+currSystemName+") ("+"deviceName"+") ["+str(len(self.romsCopied))+"] ["+str(len(self.romsFailed))+"].txt"), "w", encoding="utf-8", errors="replace")
+            romsetLogFile.writelines("=== Copied "+str(len(self.romsCopied))+" new ROMs from "+currSystemName+" to "+"deviceName"+" ===\n\n")
+            for file in self.romsCopied:
+                romsetLogFile.writelines(file+"\n")
+            if len(self.romsFailed) > 0:
+                romsetLogFile.writelines("\n= FAILED TO COPY =\n")
+                for file in self.romsFailed:
+                    romsetLogFile.writelines(file+"\n")
+            romsetLogFile.close()
 
     #############
     # FAVORITES #
@@ -1097,7 +1542,7 @@ class EzroApp:
         self.Config_Region_Choice_Name_Entry_.append(None)
         self.Config_Region_Choice_Type_Label_.append(None)
         self.Config_Region_Choice_Type_Combobox_.append(None)
-        self.priorityTypes.append(None)
+        self.regionPriorityTypes.append(None)
         self.Config_Region_Choice_Type_Combobox_.append(None)
         self.Config_Region_Choice_Tags_Label_.append(None)
         self.Config_Region_Choice_Tags_Entry_.append(None)
@@ -1126,8 +1571,8 @@ class EzroApp:
         self.Config_Region_Choice_Type_Label_[self.regionNum].configure(text='Priority Type')
         self.Config_Region_Choice_Type_Label_[self.regionNum].grid(column='0', padx='380', pady='10', row=self.regionNum, sticky='w')
         self.Config_Region_Choice_Type_Combobox_[self.regionNum] = ttk.Combobox(self.Config_Region_Frame.innerframe)
-        self.priorityTypes[self.regionNum] = tk.StringVar(value=groupType)
-        self.Config_Region_Choice_Type_Combobox_[self.regionNum].configure(state='readonly', textvariable=self.priorityTypes[self.regionNum], values='"Primary" "Secondary"', width='12')
+        self.regionPriorityTypes[self.regionNum] = tk.StringVar(value=groupType)
+        self.Config_Region_Choice_Type_Combobox_[self.regionNum].configure(state='readonly', textvariable=self.regionPriorityTypes[self.regionNum], values='"Primary" "Secondary"', width='12')
         self.Config_Region_Choice_Type_Combobox_[self.regionNum].grid(column='0', padx='465', pady='10', row=self.regionNum, sticky='w')
         self.Config_Region_Choice_Type_Combobox_[self.regionNum].bind('<<ComboboxSelected>>', self.settings_region_setPriorityType, add='')
         if groupType == "Secondary":
@@ -1207,7 +1652,7 @@ class EzroApp:
             self.regionGroupNames.insert(num-1, self.regionGroupNames.pop(num))
             self.Config_Region_Choice_Type_Label_.insert(num-1, self.Config_Region_Choice_Type_Label_.pop(num))
             self.Config_Region_Choice_Type_Combobox_.insert(num-1, self.Config_Region_Choice_Type_Combobox_.pop(num))
-            self.priorityTypes.insert(num-1, self.priorityTypes.pop(num))
+            self.regionPriorityTypes.insert(num-1, self.regionPriorityTypes.pop(num))
             self.Config_Region_Choice_Tags_Label_.insert(num-1, self.Config_Region_Choice_Tags_Label_.pop(num))
             self.Config_Region_Choice_Tags_Entry_.insert(num-1, self.Config_Region_Choice_Tags_Entry_.pop(num))
             self.regionTags.insert(num-1, self.regionTags.pop(num))
@@ -1233,7 +1678,7 @@ class EzroApp:
         self.Config_Region_Choice_Type_Label_.pop(num)
         self.Config_Region_Choice_Type_Combobox_[num].grid_remove()
         self.Config_Region_Choice_Type_Combobox_.pop(num)
-        self.priorityTypes.pop(num)
+        self.regionPriorityTypes.pop(num)
         self.Config_Region_Choice_Tags_Label_[num].grid_remove()
         self.Config_Region_Choice_Tags_Label_.pop(num)
         self.Config_Region_Choice_Tags_Entry_[num].grid_remove()
@@ -1327,7 +1772,7 @@ class EzroApp:
         for i in range(self.regionNum):
             regionSettings[str(i+1)] = {}
             regionSettings[str(i+1)]["Region Group"] = self.regionGroupNames[i].get()
-            regionSettings[str(i+1)]["Priority Type"] = self.priorityTypes[i].get()
+            regionSettings[str(i+1)]["Priority Type"] = self.regionPriorityTypes[i].get()
             regionSettings[str(i+1)]["Region/Language Tags"] = self.regionTags[i].get()
         regionSettings["Other"] = {}
         regionSettings["Other"]["Region Group"] = self.regionGroupTertiary.get()
