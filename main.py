@@ -146,37 +146,45 @@ class EzroApp:
         self.Config_Default_RomsetDir_PathChooser.grid(column='0', ipadx='90', padx='200', pady='10', row='1', sticky='w')
         self.Config_Default_ExtractArchives = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_extractArchives = tk.IntVar(value='')
-        self.Config_Default_ExtractArchives.configure(text='Extract Archives', variable=self.g_extractArchives)
+        self.Config_Default_ExtractArchives.configure(text='Extract Compressed Roms', variable=self.g_extractArchives)
         self.Config_Default_ExtractArchives.grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Config_Default_ParentFolder = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_parentFolder = tk.IntVar(value='')
-        self.Config_Default_ParentFolder.configure(text='Export Each Game to Parent Folder', variable=self.g_parentFolder)
+        self.Config_Default_ParentFolder.configure(text='Create Game Folder for Each Game', variable=self.g_parentFolder)
         self.Config_Default_ParentFolder.grid(column='0', padx='20', pady='10', row='3', sticky='w')
         self.Config_Default_SortByPrimaryRegion = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_sortByPrimaryRegion = tk.IntVar(value='')
-        self.Config_Default_SortByPrimaryRegion.configure(text='Sort Games by Best Region', variable=self.g_sortByPrimaryRegion)
+        self.Config_Default_SortByPrimaryRegion.configure(text='Create Region Folders', variable=self.g_sortByPrimaryRegion)
         self.Config_Default_SortByPrimaryRegion.grid(column='0', padx='20', pady='10', row='4', sticky='w')
         self.Config_Default_PrimaryRegionInRoot = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_primaryRegionInRoot = tk.IntVar(value='')
-        self.Config_Default_PrimaryRegionInRoot.configure(text='Keep Games from Primary Regions in Root', variable=self.g_primaryRegionInRoot)
-        self.Config_Default_PrimaryRegionInRoot.grid(column='0', padx='20', pady='10', row='6', sticky='w')
+        self.Config_Default_PrimaryRegionInRoot.configure(text='Do Not Create Folder for Primary Region', variable=self.g_primaryRegionInRoot)
+        self.Config_Default_PrimaryRegionInRoot.grid(column='0', padx='20', pady='10', row='5', sticky='w')
+        self.Config_Default_SpecialCategoryFolder = ttk.Checkbutton(self.Config_Default_Frame)
+        self.g_specialCategoryFolder = tk.IntVar(value='')
+        self.Config_Default_SpecialCategoryFolder.configure(text='Create Folders for Special Categories', variable=self.g_specialCategoryFolder)
+        self.Config_Default_SpecialCategoryFolder.grid(column='0', padx='20', pady='10', row='6', sticky='w')
         self.Config_Default_OverwriteDuplicates = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_overwriteDuplicates = tk.IntVar(value='')
         self.Config_Default_OverwriteDuplicates.configure(text='Overwrite Duplicate Files', variable=self.g_overwriteDuplicates)
-        self.Config_Default_OverwriteDuplicates.grid(column='0', padx='20', pady='10', row='5', sticky='w')
+        self.Config_Default_OverwriteDuplicates.grid(column='0', padx='20', pady='10', row='7', sticky='w')
         self.Config_Default_IncludeOtherRegions = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_includeOtherRegions = tk.IntVar(value='')
-        self.Config_Default_IncludeOtherRegions.configure(text='(1G1R) Include Games from Other Regions', variable=self.g_includeOtherRegions)
-        self.Config_Default_IncludeOtherRegions.grid(column='0', padx='20', pady='10', row='6', sticky='w')
+        self.Config_Default_IncludeOtherRegions.configure(text='(1G1R) Include Games from Non-Primary Regions', variable=self.g_includeOtherRegions)
+        self.Config_Default_IncludeOtherRegions.grid(column='0', padx='20', pady='10', row='8', sticky='w')
         self.Config_Default_Include = ttk.Labelframe(self.Config_Default_Frame)
         self.Config_Default_IncludeUnlicensed = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeUnlicensed = tk.IntVar(value='')
         self.Config_Default_IncludeUnlicensed.configure(text='Unlicensed', variable=self.g_includeUnlicensed)
         self.Config_Default_IncludeUnlicensed.grid(column='0', padx='20', pady='10', row='0', sticky='w')
+        self.Config_Default_IncludeUnreleased = ttk.Checkbutton(self.Config_Default_Include)
+        self.g_includeUnreleased = tk.IntVar(value='')
+        self.Config_Default_IncludeUnreleased.configure(text='Unreleased', variable=self.g_includeUnreleased)
+        self.Config_Default_IncludeUnreleased.grid(column='1', padx='0', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeCompilations = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeCompilations = tk.IntVar(value='')
         self.Config_Default_IncludeCompilations.configure(text='Compilations', variable=self.g_includeCompilations)
-        self.Config_Default_IncludeCompilations.grid(column='0', padx='150', pady='10', row='0', sticky='w')
+        self.Config_Default_IncludeCompilations.grid(column='2', padx='37', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeTestPrograms = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeTestPrograms = tk.IntVar(value='')
         self.Config_Default_IncludeTestPrograms.configure(text='Test Programs', variable=self.g_includeTestPrograms)
@@ -184,7 +192,7 @@ class EzroApp:
         self.Config_Default_IncludeBIOS = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeBIOS = tk.IntVar(value='')
         self.Config_Default_IncludeBIOS.configure(text='BIOS', variable=self.g_includeBIOS)
-        self.Config_Default_IncludeBIOS.grid(column='0', padx='150', pady='10', row='1', sticky='w')
+        self.Config_Default_IncludeBIOS.grid(column='1', padx='0', pady='10', row='1', sticky='w')
         self.Config_Default_IncludeNESPorts = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeNESPorts = tk.IntVar(value='')
         self.Config_Default_IncludeNESPorts.configure(text='(GBA) NES Ports', variable=self.g_includeNESPorts)
@@ -192,9 +200,9 @@ class EzroApp:
         self.Config_Default_IncludeGBAVideo = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeGBAVideo = tk.IntVar(value='')
         self.Config_Default_IncludeGBAVideo.configure(text='GBA Video', variable=self.g_includeGBAVideo)
-        self.Config_Default_IncludeGBAVideo.grid(column='0', padx='150', pady='10', row='2', sticky='w')
+        self.Config_Default_IncludeGBAVideo.grid(column='1', padx='0', pady='10', row='2', sticky='w')
         self.Config_Default_Include.configure(text='Include')
-        self.Config_Default_Include.grid(column='0', padx='20', pady='10', row='7', sticky='w')
+        self.Config_Default_Include.grid(column='0', padx='20', pady='10', row='9', sticky='w')
         self.Config_Default_Frame.configure(height='200', width='200')
         self.Config_Default_Frame.pack(side='top')
         self.Config_Notebook.add(self.Config_Default_Frame, text='Default Settings')
@@ -249,16 +257,19 @@ class EzroApp:
         tooltip.create(self.Config_Default_ExtractArchives, 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_ParentFolder, 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_SortByPrimaryRegion, 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
-        tooltip.create(self.Config_Default_PrimaryRegionInRoot, '(Only applies if \"Sort Games by Best Region\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Config_Default_PrimaryRegionInRoot, '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Config_Default_SpecialCategoryFolder, 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_IncludeOtherRegions, '(Only applies to 1G1R export.)\n\nIf enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         tooltip.create(self.Config_Default_IncludeNESPorts, '(Only applies to GBA.)\n\nInclude Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.')
         tooltip.create(self.Config_Default_IncludeGBAVideo, '(Only applies to GBA.)')
-        tooltip.create(self.Config_Region_Choice_Name_Label_Tertiary, 'The name of the region group. If \"Sort Games by Best Region\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
-        tooltip.create(self.Config_Region_Choice_Type_Label_Tertiary, 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Other Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
+        tooltip.create(self.Config_Region_Choice_Name_Label_Tertiary, 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
+        tooltip.create(self.Config_Region_Choice_Type_Label_Tertiary, 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Non-Primary Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
         # Main widget
         self.mainwindow = self.Main_Notebook
         # Other initialization
+        self.g_specificAttributes = []
+        self.g_generalAttributes = []
         if not path.exists(defaultSettingsFile):
             self.createDefaultSettings()
         if not path.exists(regionsFile):
@@ -298,6 +309,8 @@ class EzroApp:
         self.Export_IncludeFrame_ = []
         self.Export_IncludeUnlicensed_ = []
         self.includeUnlicensedChoices = []
+        self.Export_IncludeUnreleased_ = []
+        self.includeUnreleasedChoices = []
         self.Export_IncludeCompilations_ = []
         self.includeCompilationsChoices = []
         self.Export_IncludeTestPrograms_ = []
@@ -314,27 +327,12 @@ class EzroApp:
         self.parentFolderChoices = []
         self.Export_SortByPrimaryRegion_ = []
         self.sortByPrimaryRegionChoices = []
+        self.Export_SpecialCategoryFolder_ = []
+        self.specialCategoryFolderChoices = []
         self.Export_PrimaryRegionInRoot_ = []
         self.primaryRegionInRootChoices = []
         self.Export_OverwriteDuplicates_ = []
         self.overwriteDuplicatesChoices = []
-        self.Export_DAT_Label_Tooltip_ = []
-        self.Export_Romset_Label_Tooltip_ = []
-        self.Export_OutputDir_Label_Tooltip_ = []
-        self.Export_OutputType_Label_Tooltip_ = []
-        self.Export_includeOtherRegions_Tooltip_ = []
-        self.Export_FromList_Label_Tooltip_ = []
-        self.Export_IncludeUnlicensed_Tooltip_ = []
-        self.Export_IncludeCompilations_Tooltip_ = []
-        self.Export_IncludeTestPrograms_Tooltip_ = []
-        self.Export_IncludeBIOS_Tooltip_ = []
-        self.Export_IncludeNESPorts_Tooltip_ = []
-        self.Export_IncludeGBAVideo_Tooltip_ = []
-        self.Export_ExtractArchives_Tooltip_ = []
-        self.Export_ParentFolder_Tooltip_ = []
-        self.Export_SortByPrimaryRegion_Tooltip_ = []
-        self.Export_PrimaryRegionInRoot_Tooltip_ = []
-        self.Export_OverwriteDuplicates_Tooltip_ = []
         self.Export_RemoveSystem_ = []
 
         self.regionNum = 0
@@ -352,145 +350,109 @@ class EzroApp:
         self.regionTags = []
 
     def addSystemTab(self, systemName="New System"):
-        self.exportSystemNames.append(None)
-        self.Export_ScrolledFrame_.append(None)
-        self.Export_DAT_Label_.append(None)
-        self.Export_DAT_PathChooser_.append(None)
-        self.datFilePathChoices.append(None)
-        self.Export_Romset_Label_.append(None)
-        self.Export_Romset_PathChooser_.append(None)
-        self.romsetFolderPathChoices.append(None)
-        self.Export_OutputDir_Label_.append(None)
-        self.Export_OutputDir_PathChooser_.append(None)
-        self.outputFolderDirectoryChoices.append(None)
-        self.Export_Separator_.append(None)
-        self.Export_OutputType_Label_.append(None)
-        self.Export_OutputType_Combobox_.append(None)
-        self.outputTypeChoices.append(None)
-        self.Export_includeOtherRegions_.append(None)
-        self.includeOtherRegionsChoices.append(None)
-        self.Export_FromList_Label_.append(None)
-        self.Export_FromList_PathChooser_.append(None)
-        self.romListFileChoices.append(None)
-        self.Export_IncludeFrame_.append(None)
-        self.Export_IncludeUnlicensed_.append(None)
-        self.includeUnlicensedChoices.append(None)
-        self.Export_IncludeCompilations_.append(None)
-        self.includeCompilationsChoices.append(None)
-        self.Export_IncludeTestPrograms_.append(None)
-        self.includeTestProgramsChoices.append(None)
-        self.Export_IncludeBIOS_.append(None)
-        self.includeBIOSChoices.append(None)
-        self.Export_IncludeNESPorts_.append(None)
-        self.includeNESPortsChoices.append(None)
-        self.Export_IncludeGBAVideo_.append(None)
-        self.includeGBAVideoChoices.append(None)
-        self.Export_ExtractArchives_.append(None)
-        self.extractArchivesChoices.append(None)
-        self.Export_ParentFolder_.append(None)
-        self.parentFolderChoices.append(None)
-        self.Export_SortByPrimaryRegion_.append(None)
-        self.sortByPrimaryRegionChoices.append(None)
-        self.Export_PrimaryRegionInRoot_.append(None)
-        self.primaryRegionInRootChoices.append(None)
-        self.Export_OverwriteDuplicates_.append(None)
-        self.overwriteDuplicatesChoices.append(None)
-        self.Export_RemoveSystem_.append(None)
-        self.exportSystemNames[self.exportTabNum] = systemName
-        self.Export_ScrolledFrame_[self.exportTabNum] = ScrolledFrame(self.Export_Systems, scrolltype='both')
-        self.Export_DAT_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.exportSystemNames.append(systemName)
+        self.Export_ScrolledFrame_.append(ScrolledFrame(self.Export_Systems, scrolltype='both'))
+        self.Export_DAT_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_DAT_Label_[self.exportTabNum].configure(text='Input No-Intro DAT')
         self.Export_DAT_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
-        self.Export_DAT_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_DAT_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.setSystemDAT(systemName)
         self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file')
         self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='0', sticky='w')
-        self.Export_Romset_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_Romset_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_Romset_Label_[self.exportTabNum].configure(text='Input Romset')
         self.Export_Romset_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
-        self.Export_Romset_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_Romset_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.setInputRomsetDir(systemName)
         self.Export_Romset_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romsetFolderPathChoices[self.exportTabNum], type='directory')
         self.Export_Romset_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='1', sticky='w')
-        self.Export_OutputDir_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_OutputDir_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_OutputDir_Label_[self.exportTabNum].configure(text='Output Directory')
         self.Export_OutputDir_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
-        self.Export_OutputDir_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.outputFolderDirectoryChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.Export_OutputDir_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.outputFolderDirectoryChoices.append(tk.StringVar(value=''))
         self.Export_OutputDir_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.outputFolderDirectoryChoices[self.exportTabNum], type='directory')
         self.Export_OutputDir_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='2', sticky='w')
-        self.Export_Separator_[self.exportTabNum] = ttk.Separator(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_Separator_.append(ttk.Separator(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_Separator_[self.exportTabNum].configure(orient='vertical')
         self.Export_Separator_[self.exportTabNum].place(anchor='center', relheight='.95', relx='.5', rely='.5', x='0', y='0')
-        self.Export_OutputType_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_OutputType_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_OutputType_Label_[self.exportTabNum].configure(text='Output Type')
         self.Export_OutputType_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='3', sticky='w')
-        self.Export_OutputType_Combobox_[self.exportTabNum] = ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.outputTypeChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.Export_OutputType_Combobox_.append(ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.outputTypeChoices.append(tk.StringVar(value=''))
         self.Export_OutputType_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.outputTypeChoices[self.exportTabNum], values='"All" "1G1R" "Favorites"', width='10')
         self.Export_OutputType_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='3', sticky='w')
         self.Export_OutputType_Combobox_[self.exportTabNum].bind('<<ComboboxSelected>>', self.export_setOutputType, add='')
         self.Export_OutputType_Combobox_[self.exportTabNum].current(0)
-        self.Export_includeOtherRegions_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.includeOtherRegionsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeOtherRegions.get())
-        self.Export_includeOtherRegions_[self.exportTabNum].configure(text='Include Games from Other Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
+        self.Export_includeOtherRegions_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.includeOtherRegionsChoices.append(tk.IntVar(value=self.g_includeOtherRegions.get()))
+        self.Export_includeOtherRegions_[self.exportTabNum].configure(text='Include Games from Non-Primary Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
         self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
-        self.Export_FromList_Label_[self.exportTabNum] = ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_FromList_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_FromList_Label_[self.exportTabNum].configure(text='Rom List')
         self.Export_FromList_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='5', sticky='w')
-        self.Export_FromList_PathChooser_[self.exportTabNum] = PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.romListFileChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.Export_FromList_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.romListFileChoices.append(tk.StringVar(value=''))
         self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file')
         self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='5', sticky='w')
-        self.Export_IncludeFrame_[self.exportTabNum] = ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.Export_IncludeUnlicensed_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeUnlicensedChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeUnlicensed.get())
+        self.Export_IncludeFrame_.append(ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.Export_IncludeUnlicensed_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeUnlicensedChoices.append(tk.IntVar(value=self.g_includeUnlicensed.get()))
         self.Export_IncludeUnlicensed_[self.exportTabNum].configure(text='Unlicensed', variable=self.includeUnlicensedChoices[self.exportTabNum])
         self.Export_IncludeUnlicensed_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
-        self.Export_IncludeCompilations_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeCompilationsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeCompilations.get())
+        self.Export_IncludeUnreleased_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeUnreleasedChoices.append(tk.IntVar(value=self.g_includeUnreleased.get()))
+        self.Export_IncludeUnreleased_[self.exportTabNum].configure(text='Unreleased', variable=self.includeUnreleasedChoices[self.exportTabNum])
+        self.Export_IncludeUnreleased_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='0', sticky='w')
+        self.Export_IncludeCompilations_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeCompilationsChoices.append(tk.IntVar(value=self.g_includeCompilations.get()))
         self.Export_IncludeCompilations_[self.exportTabNum].configure(text='Compilations', variable=self.includeCompilationsChoices[self.exportTabNum])
-        self.Export_IncludeCompilations_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='0', sticky='w')
-        self.Export_IncludeTestPrograms_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeTestProgramsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeTestPrograms.get())
+        self.Export_IncludeCompilations_[self.exportTabNum].grid(column='2', padx='37', pady='10', row='0', sticky='w')
+        self.Export_IncludeTestPrograms_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeTestProgramsChoices.append(tk.IntVar(value=self.g_includeTestPrograms.get()))
         self.Export_IncludeTestPrograms_[self.exportTabNum].configure(text='Test Programs', variable=self.includeTestProgramsChoices[self.exportTabNum])
         self.Export_IncludeTestPrograms_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
-        self.Export_IncludeBIOS_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeBIOSChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeBIOS.get())
+        self.Export_IncludeBIOS_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeBIOSChoices.append(tk.IntVar(value=self.g_includeBIOS.get()))
         self.Export_IncludeBIOS_[self.exportTabNum].configure(text='BIOS', variable=self.includeBIOSChoices[self.exportTabNum])
-        self.Export_IncludeBIOS_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='1', sticky='w')
-        self.Export_IncludeNESPorts_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeNESPortsChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeNESPorts.get())
+        self.Export_IncludeBIOS_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='1', sticky='w')
+        self.Export_IncludeNESPorts_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeNESPortsChoices.append(tk.IntVar(value=self.g_includeNESPorts.get()))
         self.Export_IncludeNESPorts_[self.exportTabNum].configure(text='NES Ports', variable=self.includeNESPortsChoices[self.exportTabNum])
         self.Export_IncludeNESPorts_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
-        self.Export_IncludeGBAVideo_[self.exportTabNum] = ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum])
-        self.includeGBAVideoChoices[self.exportTabNum] = tk.IntVar(value=self.g_includeGBAVideo.get())
+        self.Export_IncludeGBAVideo_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
+        self.includeGBAVideoChoices.append(tk.IntVar(value=self.g_includeGBAVideo.get()))
         self.Export_IncludeGBAVideo_[self.exportTabNum].configure(text='GBA Video', variable=self.includeGBAVideoChoices[self.exportTabNum])
-        self.Export_IncludeGBAVideo_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='2', sticky='w')
+        self.Export_IncludeGBAVideo_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='2', sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum].configure(text='Include')
         self.Export_IncludeFrame_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='6', sticky='w')
-        self.Export_ExtractArchives_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.extractArchivesChoices[self.exportTabNum] = tk.IntVar(value=self.g_extractArchives.get())
-        self.Export_ExtractArchives_[self.exportTabNum].configure(text='Extract Archives', variable=self.extractArchivesChoices[self.exportTabNum])
+        self.Export_ExtractArchives_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.extractArchivesChoices.append(tk.IntVar(value=self.g_extractArchives.get()))
+        self.Export_ExtractArchives_[self.exportTabNum].configure(text='Extract Compressed Roms', variable=self.extractArchivesChoices[self.exportTabNum])
         self.Export_ExtractArchives_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.03', x='0', y='0')
-        self.Export_ParentFolder_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.parentFolderChoices[self.exportTabNum] = tk.IntVar(value=self.g_parentFolder.get())
-        self.Export_ParentFolder_[self.exportTabNum].configure(text='Export Each Game to Parent Folder', variable=self.parentFolderChoices[self.exportTabNum])
+        self.Export_ParentFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.parentFolderChoices.append(tk.IntVar(value=self.g_parentFolder.get()))
+        self.Export_ParentFolder_[self.exportTabNum].configure(text='Create Game Folder for Each Game', variable=self.parentFolderChoices[self.exportTabNum])
         self.Export_ParentFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.132', x='0', y='0')
-        self.Export_SortByPrimaryRegion_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.sortByPrimaryRegionChoices[self.exportTabNum] = tk.IntVar(value=self.g_sortByPrimaryRegion.get())
-        self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(text='Sort Games by Best Region', variable=self.sortByPrimaryRegionChoices[self.exportTabNum])
+        self.Export_SortByPrimaryRegion_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.sortByPrimaryRegionChoices.append(tk.IntVar(value=self.g_sortByPrimaryRegion.get()))
+        self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(text='Create Region Folders', variable=self.sortByPrimaryRegionChoices[self.exportTabNum])
         self.Export_SortByPrimaryRegion_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(command=self.export_togglePrimaryRegionInRoot)
-        self.Export_PrimaryRegionInRoot_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.primaryRegionInRootChoices[self.exportTabNum] = tk.IntVar(value=self.g_primaryRegionInRoot.get())
-        self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Keep Games from Primary Regions in Root', variable=self.primaryRegionInRootChoices[self.exportTabNum])
+        self.Export_PrimaryRegionInRoot_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.primaryRegionInRootChoices.append(tk.IntVar(value=self.g_primaryRegionInRoot.get()))
+        self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Do Not Create Folder for Primary Region', variable=self.primaryRegionInRootChoices[self.exportTabNum])
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
-        self.Export_OverwriteDuplicates_[self.exportTabNum] = ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
-        self.overwriteDuplicatesChoices[self.exportTabNum] = tk.IntVar(value=self.g_overwriteDuplicates.get())
+        self.Export_SpecialCategoryFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.specialCategoryFolderChoices.append(tk.IntVar(value=self.g_specialCategoryFolder.get()))
+        self.Export_SpecialCategoryFolder_[self.exportTabNum].configure(text='Create Folders for Special Categories', variable=self.specialCategoryFolderChoices[self.exportTabNum])
+        self.Export_SpecialCategoryFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
+        self.Export_OverwriteDuplicates_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.overwriteDuplicatesChoices.append(tk.IntVar(value=self.g_overwriteDuplicates.get()))
         self.Export_OverwriteDuplicates_[self.exportTabNum].configure(text='Overwrite Duplicate Files', variable=self.overwriteDuplicatesChoices[self.exportTabNum])
-        self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
-        self.Export_RemoveSystem_[self.exportTabNum] = ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe)
+        self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
+        self.Export_RemoveSystem_.append(ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_RemoveSystem_[self.exportTabNum].configure(text='Remove System')
         self.Export_RemoveSystem_[self.exportTabNum].place(anchor='se', relx='1', rely='1', x='-10', y='-10')
         self.Export_RemoveSystem_[self.exportTabNum].configure(command=self.export_removeSystem)
@@ -508,12 +470,13 @@ class EzroApp:
         tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf unsure, leave this enabled.')
-        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Sort Games by Best Region\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_SpecialCategoryFolder_[self.exportTabNum], 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
 
 
         self.Export_Systems.select(self.exportTabNum)
-        if systemName != "Game Boy Advance":
+        if systemName != "Nintendo - Game Boy Advance":
             self.Export_IncludeNESPorts_[self.exportTabNum].grid_remove()
             self.Export_IncludeGBAVideo_[self.exportTabNum].grid_remove()
         self.export_setOutputType()
@@ -521,7 +484,7 @@ class EzroApp:
         self.exportTabNum += 1
 
     def setSystemDAT(self, systemName):
-        self.datFilePathChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.datFilePathChoices.append(tk.StringVar(value=''))
         if self.ssdHelper(systemName):
             return
         alternateSystemNames = systemNamesDict.get(systemName)
@@ -543,7 +506,7 @@ class EzroApp:
         return False
 
     def setInputRomsetDir(self, systemName):
-        self.romsetFolderPathChoices[self.exportTabNum] = tk.StringVar(value='')
+        self.romsetFolderPathChoices.append(tk.StringVar(value=''))
         if self.sirdHelper(systemName):
             return
         alternateSystemNames = systemNamesDict.get(systemName)
@@ -622,6 +585,8 @@ class EzroApp:
         self.Export_IncludeFrame_.pop(currSystemIndex)
         self.Export_IncludeUnlicensed_.pop(currSystemIndex)
         self.includeUnlicensedChoices.pop(currSystemIndex)
+        self.Export_IncludeUnreleased_.pop(currSystemIndex)
+        self.includeUnreleasedChoices.pop(currSystemIndex)
         self.Export_IncludeCompilations_.pop(currSystemIndex)
         self.includeCompilationsChoices.pop(currSystemIndex)
         self.Export_IncludeTestPrograms_.pop(currSystemIndex)
@@ -637,6 +602,7 @@ class EzroApp:
         self.Export_ParentFolder_.pop(currSystemIndex)
         self.parentFolderChoices.pop(currSystemIndex)
         self.Export_SortByPrimaryRegion_.pop(currSystemIndex)
+        self.Export_SpecialCategoryFolder_.pop(currSystemIndex)
         self.sortByPrimaryRegionChoices.pop(currSystemIndex)
         self.Export_PrimaryRegionInRoot_.pop(currSystemIndex)
         self.primaryRegionInRootChoices.pop(currSystemIndex)
@@ -839,7 +805,7 @@ class EzroApp:
 
     def export_startExport(self):
         self.Export_StartButton.configure(state='disabled')
-        # self.updateAndAuditVerifiedRomsets(self.systemIndexList) # TODO: Start the export here!
+        self.mainExport(self.systemIndexList)
 
     def export_cancelExport(self):
         # Cancelling an export early causes an error in tkinter (writing to a progressbar/text field/etc. that no longer exists) but it doesn't actually affect anything
@@ -867,7 +833,7 @@ class EzroApp:
     #################
 
     def updateAndAuditVerifiedRomsets(self, systemIndices):
-        global allGameNamesInDAT, romsWithoutCRCMatch, progressBar, recentlyVerified
+        global allGameNamesInDAT, romsWithoutCRCMatch, progressBar
 
         self.auditInProgress = True
         self.Audit_MainProgress_Label.configure(text='Auditing...')
@@ -902,7 +868,7 @@ class EzroApp:
                 if gameCRC not in crcToGameName.keys():
                     crcToGameName[gameCRC] = []
                 crcToGameName[gameCRC].append(gameName)
-            if currSystemName == "Nintendo Entertainment System":
+            if currSystemName == "Nintendo - Nintendo Entertainment System":
                 headerLength = 16
             else:
                 headerLength = 0
@@ -921,8 +887,7 @@ class EzroApp:
                     if path.basename(root) != "[Unverified]":
                         foundMatch = self.renamingProcess(root, file, isNoIntro, headerLength, crcToGameName, allGameNames)
                         self.Audit_SubProgress_Bar['value'] += 1
-                        # tk_root.update_idletasks()
-                        tk_root.update() # a normal update() allows us to check if the Cancel button was clicked, allowing a safe early exit
+                        tk_root.update() # a full update() (as opposed to update_idletasks()) allows us to check if the Cancel button was clicked, allowing a safe early exit
             xmlRomsInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == True]
             xmlRomsNotInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == False]
             self.createSystemAuditLog(xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName)
@@ -950,8 +915,6 @@ class EzroApp:
         self.audit_cancelButtonText.set("Finish")
         self.auditInProgress = False
 
-
-
     def getCRC(self, filePath, headerLength=0):
         if zipfile.is_zipfile(filePath):
             with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
@@ -973,8 +936,6 @@ class EzroApp:
                 fileBytes = unheaderedFile.read()
                 headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
                 return headerlessCRC.zfill(8).upper()
-
-
 
     def renamingProcess(self, root, file, isNoIntro, headerLength, crcToGameName, allGameNames):
         global allGameNamesInDAT, romsWithoutCRCMatch
@@ -1029,16 +990,12 @@ class EzroApp:
         if not foundMatch:
             romsWithoutCRCMatch.append(file)
 
-
-
     def renameGame(self, filePath, newName, fileExt):
         if zipfile.is_zipfile(filePath):
             self.renameArchiveAndContent(filePath, newName)
         else:
             rename(filePath, path.join(path.dirname(filePath), newName+fileExt))
             self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName+"\n\n")
-
-
 
     def createSystemAuditLog(self, xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName):
         xmlRomsInSet.sort()
@@ -1066,8 +1023,6 @@ class EzroApp:
                 auditLogFile.writelines(rom+"\n")
         auditLogFile.close()
 
-
-
     def renameArchiveAndContent(self, archivePath, newName):
         with zipfile.ZipFile(archivePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
             zippedFiles = zippedFile.namelist()
@@ -1086,8 +1041,6 @@ class EzroApp:
             newZip.write(newExtractedFilePath, arcname=newName+fileExt)
         remove(newExtractedFilePath)
         self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName+"\n\n")
-
-
 
     ##################
     # EXPORT (Logic) #
@@ -1166,8 +1119,8 @@ class EzroApp:
         self.regionTags[self.regionNum] = tk.StringVar(value=groupTags)
         self.Config_Region_Choice_Tags_Entry_[self.regionNum].configure(textvariable=self.regionTags[self.regionNum], width='45')
         self.Config_Region_Choice_Tags_Entry_[self.regionNum].grid(column='0', padx='720', pady='10', row=self.regionNum, sticky='w')
-        tooltip.create(self.Config_Region_Choice_Name_Label_[self.regionNum], 'The name of the region group. If \"Sort Games by Best Region\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
-        tooltip.create(self.Config_Region_Choice_Type_Label_[self.regionNum], 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Other Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
+        tooltip.create(self.Config_Region_Choice_Name_Label_[self.regionNum], 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
+        tooltip.create(self.Config_Region_Choice_Type_Label_[self.regionNum], 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Non-Primary Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
         tooltip.create(self.Config_Region_Choice_Tags_Label_[self.regionNum], 'Rom tags that signify that a rom belongs to this group (region tags like USA and Europe, language tags like En and Fr, etc). If a rom contains tags from multiple region groups, then the higher group will take priority.')
 
         self.regionNum += 1
@@ -1330,13 +1283,15 @@ class EzroApp:
         defaultSettings["General"]["Input No-Intro DAT Directory"] = self.g_datFilePath.get()
         defaultSettings["General"]["Input Romset Directory"] = self.g_romsetFolderPath.get()
         defaultSettings["Organization"] = {}
-        defaultSettings["Organization"]["Extract Archives"] = self.ssch(self.g_extractArchives)
-        defaultSettings["Organization"]["Export Each Game to Parent Folder"] = self.ssch(self.g_parentFolder)
-        defaultSettings["Organization"]["Sort Games by Best Region"] = self.ssch(self.g_sortByPrimaryRegion)
-        defaultSettings["Organization"]["Keep Games from Primary Regions in Root"] = self.ssch(self.g_primaryRegionInRoot)
+        defaultSettings["Organization"]["Extract Compressed Roms"] = self.ssch(self.g_extractArchives)
+        defaultSettings["Organization"]["Create Game Folder for Each Game"] = self.ssch(self.g_parentFolder)
+        defaultSettings["Organization"]["Create Region Folders"] = self.ssch(self.g_sortByPrimaryRegion)
+        defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = self.ssch(self.g_primaryRegionInRoot)
+        defaultSettings["Organization"]["Create Folders for Special Categories"] = self.ssch(self.g_specialCategoryFolder)
         defaultSettings["Organization"]["Overwrite Duplicate Files"] = self.ssch(self.g_overwriteDuplicates)
         defaultSettings["Include"] = {}
         defaultSettings["Include"]["Unlicensed"] = self.ssch(self.g_includeUnlicensed)
+        defaultSettings["Include"]["Unreleased"] = self.ssch(self.g_includeUnreleased)
         defaultSettings["Include"]["Compilations"] = self.ssch(self.g_includeCompilations)
         defaultSettings["Include"]["Test Programs"] = self.ssch(self.g_includeTestPrograms)
         defaultSettings["Include"]["BIOS"] = self.ssch(self.g_includeBIOS)
@@ -1378,13 +1333,15 @@ class EzroApp:
         defaultSettings["General"]["Input No-Intro DAT Directory"] = ""
         defaultSettings["General"]["Input Romset Directory"] = ""
         defaultSettings["Organization"] = {}
-        defaultSettings["Organization"]["Extract Archives"] = "False"
-        defaultSettings["Organization"]["Export Each Game to Parent Folder"] = "False"
-        defaultSettings["Organization"]["Sort Games by Best Region"] = "False"
-        defaultSettings["Organization"]["Keep Games from Primary Regions in Root"] = "True"
+        defaultSettings["Organization"]["Extract Compressed Roms"] = "False"
+        defaultSettings["Organization"]["Create Game Folder for Each Game"] = "False"
+        defaultSettings["Organization"]["Create Region Folders"] = "False"
+        defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = "True"
+        defaultSettings["Organization"]["Create Folders for Special Categories"] = "True"
         defaultSettings["Organization"]["Overwrite Duplicate Files"] = "False"
         defaultSettings["Include"] = {}
         defaultSettings["Include"]["Unlicensed"] = "True"
+        defaultSettings["Include"]["Unreleased"] = "True"
         defaultSettings["Include"]["Compilations"] = "True"
         defaultSettings["Include"]["Test Programs"] = "False"
         defaultSettings["Include"]["BIOS"] = "False"
@@ -1419,37 +1376,49 @@ class EzroApp:
 
     def loadConfig(self):
         global defaultSettings, regionSettings
-        defaultSettings = configparser.ConfigParser(allow_no_value=True)
-        defaultSettings.optionxform = str
-        defaultSettings.read(defaultSettingsFile)
-        self.g_datFilePath.set(defaultSettings["General"]["Input No-Intro DAT Directory"])
-        self.g_romsetFolderPath.set(defaultSettings["General"]["Input Romset Directory"])
-        self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePath, type='directory')
-        self.Config_Default_RomsetDir_PathChooser.configure(textvariable=self.g_romsetFolderPath, type='directory')
-        self.g_extractArchives.set(defaultSettings["Organization"]["Extract Archives"] == "True")
-        self.g_parentFolder.set(defaultSettings["Organization"]["Export Each Game to Parent Folder"] == "True")
-        self.g_sortByPrimaryRegion.set(defaultSettings["Organization"]["Sort Games by Best Region"] == "True")
-        self.g_primaryRegionInRoot.set(defaultSettings["Organization"]["Keep Games from Primary Regions in Root"] == "True")
-        self.g_overwriteDuplicates.set(defaultSettings["Organization"]["Overwrite Duplicate Files"] == "True")
-        self.g_includeUnlicensed.set(defaultSettings["Include"]["Unlicensed"] == "True")
-        self.g_includeCompilations.set(defaultSettings["Include"]["Compilations"] == "True")
-        self.g_includeTestPrograms.set(defaultSettings["Include"]["Test Programs"] == "True")
-        self.g_includeBIOS.set(defaultSettings["Include"]["BIOS"] == "True")
-        self.g_includeNESPorts.set(defaultSettings["Include"]["(GBA) NES Ports"] == "True")
-        self.g_includeGBAVideo.set(defaultSettings["Include"]["(GBA) GBA Video"] == "True")
-        self.g_includeOtherRegions.set(defaultSettings["Include"]["(1G1R) Games from Other Regions"] == "True")
-        regionSettings = configparser.ConfigParser(allow_no_value=True)
-        regionSettings.optionxform = str
-        regionSettings.read(regionsFile)
-        while self.regionNum > 0:
-            self.removeRegionGroup(0)
-        keys = list(regionSettings.keys())[1:]
-        for i in range(len(keys)):
-            if keys[i].isdigit():
-                self.addRegionGroup(groupName=regionSettings[str(i+1)]["Region Group"], groupType=regionSettings[str(i+1)]["Priority Type"], groupTags=regionSettings[str(i+1)]["Region/Language Tags"])
-            elif keys[i] == "Other":
-                self.regionGroupTertiary.set(regionSettings["Other"]["Region Group"])
-                self.Config_Region_Choice_Name_Entry_Tertiary.configure(text=self.regionGroupTertiary)
+        try:
+            defaultSettings = configparser.ConfigParser(allow_no_value=True)
+            defaultSettings.optionxform = str
+            defaultSettings.read(defaultSettingsFile)
+            self.g_datFilePath.set(defaultSettings["General"]["Input No-Intro DAT Directory"])
+            self.g_romsetFolderPath.set(defaultSettings["General"]["Input Romset Directory"])
+            self.Config_Default_DATDir_PathChooser.configure(textvariable=self.g_datFilePath, type='directory')
+            self.Config_Default_RomsetDir_PathChooser.configure(textvariable=self.g_romsetFolderPath, type='directory')
+            self.g_extractArchives.set(defaultSettings["Organization"]["Extract Compressed Roms"] == "True")
+            self.g_parentFolder.set(defaultSettings["Organization"]["Create Game Folder for Each Game"] == "True")
+            self.g_sortByPrimaryRegion.set(defaultSettings["Organization"]["Create Region Folders"] == "True")
+            self.g_primaryRegionInRoot.set(defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] == "True")
+            self.g_specialCategoryFolder.set(defaultSettings["Organization"]["Create Folders for Special Categories"] == "True")
+            self.g_overwriteDuplicates.set(defaultSettings["Organization"]["Overwrite Duplicate Files"] == "True")
+            self.g_includeUnlicensed.set(defaultSettings["Include"]["Unlicensed"] == "True")
+            self.g_includeUnreleased.set(defaultSettings["Include"]["Unreleased"] == "True")
+            self.g_includeCompilations.set(defaultSettings["Include"]["Compilations"] == "True")
+            self.g_includeTestPrograms.set(defaultSettings["Include"]["Test Programs"] == "True")
+            self.g_includeBIOS.set(defaultSettings["Include"]["BIOS"] == "True")
+            self.g_includeNESPorts.set(defaultSettings["Include"]["(GBA) NES Ports"] == "True")
+            self.g_includeGBAVideo.set(defaultSettings["Include"]["(GBA) GBA Video"] == "True")
+            self.g_includeOtherRegions.set(defaultSettings["Include"]["(1G1R) Games from Other Regions"] == "True")
+            self.g_specificAttributes = defaultSettings["Keywords"]["Specific Attributes"]
+            self.g_generalAttributes = defaultSettings["Keywords"]["General Attributes"]
+        except:
+            showinfo("EzRO", "Invalid settings.ini file. Delete it and reload, then a new default file will be created.")
+            sys.exit()
+        try:
+            regionSettings = configparser.ConfigParser(allow_no_value=True)
+            regionSettings.optionxform = str
+            regionSettings.read(regionsFile)
+            while self.regionNum > 0:
+                self.removeRegionGroup(0)
+            keys = list(regionSettings.keys())[1:]
+            for i in range(len(keys)):
+                if keys[i].isdigit():
+                    self.addRegionGroup(groupName=regionSettings[str(i+1)]["Region Group"], groupType=regionSettings[str(i+1)]["Priority Type"], groupTags=regionSettings[str(i+1)]["Region/Language Tags"])
+                elif keys[i] == "Other":
+                    self.regionGroupTertiary.set(regionSettings["Other"]["Region Group"])
+                    self.Config_Region_Choice_Name_Entry_Tertiary.configure(text=self.regionGroupTertiary)
+        except:
+            showinfo("EzRO", "Invalid regions.ini file. Delete it and reload, then a new default file will be created.")
+            sys.exit()
 
     ########
     # MISC #
