@@ -83,6 +83,11 @@ class EzroApp:
         self.Export_AuditAll.configure(text='Audit All Open Systems')
         self.Export_AuditAll.place(anchor='w', relx='.15', rely='.925', x='0', y='0')
         self.Export_AuditAll.configure(command=self.export_auditAllSystems)
+        self.Export_TestExport = ttk.Checkbutton(self.Export_Frame)
+        self.isTestExport = tk.IntVar(value='')
+        self.Export_TestExport.configure(text='Test Export', variable=self.isTestExport)
+        self.Export_TestExport.place(anchor='e', relx='.72', rely='.925', x='0', y='0')
+        self.Export_TestExport.configure(command=self.export_toggleTestExport)
         self.Export_ExportThis = ttk.Button(self.Export_Frame)
         self.Export_ExportThis.configure(text='Export This System')
         self.Export_ExportThis.place(anchor='e', relx='.825', rely='.925', x='0', y='0')
@@ -255,6 +260,7 @@ class EzroApp:
         self.Main_Notebook.configure(height='675', width='1200')
         self.Main_Notebook.grid(column='0', row='0')
         # Tooltips
+        tooltip.create(self.Export_TestExport, 'For testing; if enabled, roms will NOT be exported. This allows you to see how many roms would be exported and how much space they would take up without actually exporting anything.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_DATDir_Label, 'The directory containing No-Intro DAT files for each system. These contain information about each rom, which is used in both exporting and auditing.\n\nIf this is provided, the \"Export\" tab will attempt to automatically match DAT files from this directory with each system so you don\'t have to input them manually.')
         tooltip.create(self.Config_Default_RomsetDir_Label, 'The directory containing your rom directories for each system.\n\nIf this is provided, the \"Export\" tab will attempt to automatically match folders from this directory with each system so you don\'t have to input them manually.')
         tooltip.create(self.Config_Default_ExtractArchives, 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
@@ -273,6 +279,7 @@ class EzroApp:
         # Other initialization
         self.g_specificAttributes = []
         self.g_generalAttributes = []
+        self.isExport = True
         if not path.exists(defaultSettingsFile):
             self.createDefaultSettings()
         if not path.exists(regionsFile):
@@ -771,13 +778,22 @@ class EzroApp:
         self.systemIndexList = systemIndexList
         self.exportInProgress = False
         self.Export_Window = Toplevel()
-        self.Export_Window.title("EzRO Export")
+        if self.isExport:
+            self.Export_Window.title("EzRO Export")
+        else:
+            self.Export_Window.title("EzRO Test Export")
         self.Export_Frame = ttk.Frame(self.Export_Window)
         self.Export_MainProgress_Label = ttk.Label(self.Export_Frame)
         if numSystems == 1:
-            self.Export_MainProgress_Label.configure(text='Preparing to export system: '+self.exportSystemNames[systemIndexList[0]])
+            if self.isExport:
+                self.Export_MainProgress_Label.configure(text='Preparing to export system: '+self.exportSystemNames[systemIndexList[0]])
+            else:
+                self.Export_MainProgress_Label.configure(text='Preparing to test export of system: '+self.exportSystemNames[systemIndexList[0]])
         else:
-            self.Export_MainProgress_Label.configure(text='Preparing to export '+str(numSystems)+' systems')
+            if self.isExport:
+                self.Export_MainProgress_Label.configure(text='Preparing to export '+str(numSystems)+' systems')
+            else:
+                self.Export_MainProgress_Label.configure(text='Preparing to test export of '+str(numSystems)+' systems')
         self.Export_MainProgress_Label.place(anchor='center', relx='.5', rely='.05', x='0', y='0')
         self.Export_MainProgress_Bar = ttk.Progressbar(self.Export_Frame)
         self.Export_MainProgress_Bar.configure(maximum=numSystems, orient='horizontal')
@@ -819,6 +835,9 @@ class EzroApp:
         else:
             self.exportInProgress = False
             self.Export_Window.destroy()
+
+    def export_toggleTestExport(self):
+        self.isExport = not self.isTestExport.get()
 
     def export_auditHelp(self):
         showinfo("Audit Help",
