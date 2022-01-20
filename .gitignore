@@ -115,6 +115,8 @@ dmypy.json
 
 Planning/
 Logs/
+System Loadouts/
+Libraries/
 regions.ini
 settings.ini
 temp.py

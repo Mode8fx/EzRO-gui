@@ -5,11 +5,13 @@ try:
     import Tkinter.ttk as ttk
     from Tkinter.messagebox import showinfo, showerror, askyesno
     from Tkinter import Toplevel
+    from Tkinter.filedialog import askopenfilename, asksaveasfilename
 except:
     import tkinter as tk
     import tkinter.ttk as ttk
     from tkinter.messagebox import showinfo, showerror, askyesno
     from tkinter import Toplevel
+    from tkinter.filedialog import askopenfilename, asksaveasfilename
 from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
@@ -64,11 +66,19 @@ class EzroApp:
         self.Export_System_Combobox = ttk.Combobox(self.Export_Frame)
         self.systemChoice = tk.StringVar(value='')
         self.Export_System_Combobox.configure(state='readonly', textvariable=self.systemChoice, values=systemListStr, width='50')
-        self.Export_System_Combobox.place(anchor='center', relx='.425', rely='.075', x='0', y='0')
+        self.Export_System_Combobox.place(anchor='e', relx='.375', rely='.075', x='0', y='0')
         self.Export_System_Button = ttk.Button(self.Export_Frame)
         self.Export_System_Button.configure(text='Add System')
-        self.Export_System_Button.place(anchor='center', relx='.6', rely='.075', x='0', y='0')
+        self.Export_System_Button.place(anchor='e', relx='.45', rely='.075', x='0', y='0')
         self.Export_System_Button.configure(command=self.export_addSystem)
+        self.Export_SaveLayout_Button = ttk.Button(self.Export_Frame)
+        self.Export_SaveLayout_Button.configure(text='Save System Tabs')
+        self.Export_SaveLayout_Button.place(anchor='e', relx='.74', rely='.075', x='0', y='0')
+        self.Export_SaveLayout_Button.configure(command=self.export_saveSystemLoadout)
+        self.Export_LoadLayout_Button = ttk.Button(self.Export_Frame)
+        self.Export_LoadLayout_Button.configure(text='Load System Tabs')
+        self.Export_LoadLayout_Button.place(anchor='w', relx='.76', rely='.075', x='0', y='0')
+        self.Export_LoadLayout_Button.configure(command=self.export_loadSystemLoadout)
         self.Export_Systems = ttk.Notebook(self.Export_Frame)
 
         self.initVars()
@@ -359,21 +369,26 @@ class EzroApp:
         self.Config_Region_Choice_Tags_Entry_ = []
         self.regionTags = []
 
-    def addSystemTab(self, systemName="New System"):
+    def addSystemTab(self, systemName="New System", datFilePath="", romsetFolderPath="", outputFolderDirectory="",
+            outputType="All", includeOtherRegions=False, romList="",
+            includeUnlicensed=False, includeUnreleased=False, includeCompilations=False,
+            includeTestPrograms=False, includeBIOS=False, includeNESPorts=False,
+            includeGBAVideo=False, extractArchives=False, parentFolder=False, sortByPrimaryRegion=False, primaryRegionInRoot=False,
+            specialCategoryFolder=False, overwriteDuplicates=False):
         self.exportSystemNames.append(systemName)
         self.Export_ScrolledFrame_.append(ScrolledFrame(self.Export_Systems, scrolltype='both'))
         self.Export_DAT_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_DAT_Label_[self.exportTabNum].configure(text='Input No-Intro DAT')
         self.Export_DAT_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Export_DAT_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.setSystemDAT(systemName)
+        self.setSystemDAT(systemName, datFilePath)
         self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file')
         self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='0', sticky='w')
         self.Export_Romset_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_Romset_Label_[self.exportTabNum].configure(text='Input Romset')
         self.Export_Romset_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Export_Romset_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.setInputRomsetDir(systemName)
+        self.setInputRomsetDir(systemName, romsetFolderPath)
         self.Export_Romset_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romsetFolderPathChoices[self.exportTabNum], type='directory')
         self.Export_Romset_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='1', sticky='w')
         self.Export_OutputDir_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -381,6 +396,7 @@ class EzroApp:
         self.Export_OutputDir_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Export_OutputDir_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.outputFolderDirectoryChoices.append(tk.StringVar(value=''))
+        self.outputFolderDirectoryChoices[self.exportTabNum].set(outputFolderDirectory)
         self.Export_OutputDir_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.outputFolderDirectoryChoices[self.exportTabNum], type='directory')
         self.Export_OutputDir_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='2', sticky='w')
         self.Export_Separator_.append(ttk.Separator(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -391,12 +407,18 @@ class EzroApp:
         self.Export_OutputType_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='3', sticky='w')
         self.Export_OutputType_Combobox_.append(ttk.Combobox(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.outputTypeChoices.append(tk.StringVar(value=''))
+        self.outputTypeChoices[self.exportTabNum].set(outputType)
         self.Export_OutputType_Combobox_[self.exportTabNum].configure(state='readonly', textvariable=self.outputTypeChoices[self.exportTabNum], values='"All" "1G1R" "Favorites"', width='10')
         self.Export_OutputType_Combobox_[self.exportTabNum].grid(column='0', padx='150', pady='10', row='3', sticky='w')
         self.Export_OutputType_Combobox_[self.exportTabNum].bind('<<ComboboxSelected>>', self.export_setOutputType, add='')
-        self.Export_OutputType_Combobox_[self.exportTabNum].current(0)
+        if outputType == "1G1R":
+            self.Export_OutputType_Combobox_[self.exportTabNum].current(1)
+        elif outputType == "Favorites":
+            self.Export_OutputType_Combobox_[self.exportTabNum].current(2)
+        else:
+            self.Export_OutputType_Combobox_[self.exportTabNum].current(0)
         self.Export_includeOtherRegions_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.includeOtherRegionsChoices.append(tk.IntVar(value=self.g_includeOtherRegions.get()))
+        self.includeOtherRegionsChoices.append(tk.IntVar(value=includeOtherRegions))
         self.Export_includeOtherRegions_[self.exportTabNum].configure(text='Include Games from Non-Primary Regions', variable=self.includeOtherRegionsChoices[self.exportTabNum])
         self.Export_includeOtherRegions_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='4', sticky='w')
         self.Export_FromList_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -404,62 +426,63 @@ class EzroApp:
         self.Export_FromList_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='5', sticky='w')
         self.Export_FromList_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.romListFileChoices.append(tk.StringVar(value=''))
+        self.romListFileChoices[self.exportTabNum].set(romList)
         self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file')
         self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='5', sticky='w')
         self.Export_IncludeFrame_.append(ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_IncludeUnlicensed_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeUnlicensedChoices.append(tk.IntVar(value=self.g_includeUnlicensed.get()))
+        self.includeUnlicensedChoices.append(tk.IntVar(value=includeUnlicensed))
         self.Export_IncludeUnlicensed_[self.exportTabNum].configure(text='Unlicensed', variable=self.includeUnlicensedChoices[self.exportTabNum])
         self.Export_IncludeUnlicensed_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Export_IncludeUnreleased_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeUnreleasedChoices.append(tk.IntVar(value=self.g_includeUnreleased.get()))
+        self.includeUnreleasedChoices.append(tk.IntVar(value=includeUnreleased))
         self.Export_IncludeUnreleased_[self.exportTabNum].configure(text='Unreleased', variable=self.includeUnreleasedChoices[self.exportTabNum])
         self.Export_IncludeUnreleased_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='0', sticky='w')
         self.Export_IncludeCompilations_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeCompilationsChoices.append(tk.IntVar(value=self.g_includeCompilations.get()))
+        self.includeCompilationsChoices.append(tk.IntVar(value=includeCompilations))
         self.Export_IncludeCompilations_[self.exportTabNum].configure(text='Compilations', variable=self.includeCompilationsChoices[self.exportTabNum])
         self.Export_IncludeCompilations_[self.exportTabNum].grid(column='2', padx='37', pady='10', row='0', sticky='w')
         self.Export_IncludeTestPrograms_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeTestProgramsChoices.append(tk.IntVar(value=self.g_includeTestPrograms.get()))
+        self.includeTestProgramsChoices.append(tk.IntVar(value=includeTestPrograms))
         self.Export_IncludeTestPrograms_[self.exportTabNum].configure(text='Test Programs', variable=self.includeTestProgramsChoices[self.exportTabNum])
         self.Export_IncludeTestPrograms_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Export_IncludeBIOS_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeBIOSChoices.append(tk.IntVar(value=self.g_includeBIOS.get()))
+        self.includeBIOSChoices.append(tk.IntVar(value=includeBIOS))
         self.Export_IncludeBIOS_[self.exportTabNum].configure(text='BIOS', variable=self.includeBIOSChoices[self.exportTabNum])
         self.Export_IncludeBIOS_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='1', sticky='w')
         self.Export_IncludeNESPorts_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeNESPortsChoices.append(tk.IntVar(value=self.g_includeNESPorts.get()))
+        self.includeNESPortsChoices.append(tk.IntVar(value=includeNESPorts))
         self.Export_IncludeNESPorts_[self.exportTabNum].configure(text='NES Ports', variable=self.includeNESPortsChoices[self.exportTabNum])
         self.Export_IncludeNESPorts_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Export_IncludeGBAVideo_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-        self.includeGBAVideoChoices.append(tk.IntVar(value=self.g_includeGBAVideo.get()))
+        self.includeGBAVideoChoices.append(tk.IntVar(value=includeGBAVideo))
         self.Export_IncludeGBAVideo_[self.exportTabNum].configure(text='GBA Video', variable=self.includeGBAVideoChoices[self.exportTabNum])
         self.Export_IncludeGBAVideo_[self.exportTabNum].grid(column='1', padx='0', pady='10', row='2', sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum].configure(text='Include')
         self.Export_IncludeFrame_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='6', sticky='w')
         self.Export_ExtractArchives_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.extractArchivesChoices.append(tk.IntVar(value=self.g_extractArchives.get()))
+        self.extractArchivesChoices.append(tk.IntVar(value=extractArchives))
         self.Export_ExtractArchives_[self.exportTabNum].configure(text='Extract Compressed Roms', variable=self.extractArchivesChoices[self.exportTabNum])
         self.Export_ExtractArchives_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.03', x='0', y='0')
         self.Export_ParentFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.parentFolderChoices.append(tk.IntVar(value=self.g_parentFolder.get()))
+        self.parentFolderChoices.append(tk.IntVar(value=parentFolder))
         self.Export_ParentFolder_[self.exportTabNum].configure(text='Create Game Folder for Each Game', variable=self.parentFolderChoices[self.exportTabNum])
         self.Export_ParentFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.132', x='0', y='0')
         self.Export_SortByPrimaryRegion_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.sortByPrimaryRegionChoices.append(tk.IntVar(value=self.g_sortByPrimaryRegion.get()))
+        self.sortByPrimaryRegionChoices.append(tk.IntVar(value=sortByPrimaryRegion))
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(text='Create Region Folders', variable=self.sortByPrimaryRegionChoices[self.exportTabNum])
         self.Export_SortByPrimaryRegion_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(command=self.export_togglePrimaryRegionInRoot)
         self.Export_PrimaryRegionInRoot_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.primaryRegionInRootChoices.append(tk.IntVar(value=self.g_primaryRegionInRoot.get()))
+        self.primaryRegionInRootChoices.append(tk.IntVar(value=primaryRegionInRoot))
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Do Not Create Folder for Primary Region', variable=self.primaryRegionInRootChoices[self.exportTabNum])
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
         self.Export_SpecialCategoryFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.specialCategoryFolderChoices.append(tk.IntVar(value=self.g_specialCategoryFolder.get()))
+        self.specialCategoryFolderChoices.append(tk.IntVar(value=specialCategoryFolder))
         self.Export_SpecialCategoryFolder_[self.exportTabNum].configure(text='Create Folders for Special Categories', variable=self.specialCategoryFolderChoices[self.exportTabNum])
         self.Export_SpecialCategoryFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
         self.Export_OverwriteDuplicates_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.overwriteDuplicatesChoices.append(tk.IntVar(value=self.g_overwriteDuplicates.get()))
+        self.overwriteDuplicatesChoices.append(tk.IntVar(value=overwriteDuplicates))
         self.Export_OverwriteDuplicates_[self.exportTabNum].configure(text='Overwrite Duplicate Files', variable=self.overwriteDuplicatesChoices[self.exportTabNum])
         self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
         self.Export_RemoveSystem_.append(ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -493,8 +516,11 @@ class EzroApp:
         self.export_togglePrimaryRegionInRoot()
         self.exportTabNum += 1
 
-    def setSystemDAT(self, systemName):
+    def setSystemDAT(self, systemName, datFilePath):
         self.datFilePathChoices.append(tk.StringVar(value=''))
+        if datFilePath != "":
+            self.datFilePathChoices[self.exportTabNum].set(datFilePath)
+            return
         if self.ssdHelper(systemName):
             return
         alternateSystemNames = systemNamesDict.get(systemName)
@@ -515,8 +541,11 @@ class EzroApp:
                 return True
         return False
 
-    def setInputRomsetDir(self, systemName):
+    def setInputRomsetDir(self, systemName, romsetFolderPath):
         self.romsetFolderPathChoices.append(tk.StringVar(value=''))
+        if romsetFolderPath != "":
+            self.romsetFolderPathChoices[self.exportTabNum].set(romsetFolderPath)
+            return
         if self.sirdHelper(systemName):
             return
         alternateSystemNames = systemNamesDict.get(systemName)
@@ -537,13 +566,75 @@ class EzroApp:
                 return True
         return False
 
+    def export_saveSystemLoadout(self):
+        if self.exportTabNum > 0:
+            loadoutFile = asksaveasfilename(defaultextension='.txt', filetypes=[("Text Files", '*.txt')],
+                initialdir=path.join(progFolder, "System Loadouts"),
+                title="Save System Tabs")
+            if loadoutFile == "":
+                return
+            loadout = configparser.ConfigParser(allow_no_value=True)
+            loadout.optionxform = str
+            for i in range(len(self.exportSystemNames)):
+                loadout[self.exportSystemNames[i]] = {}
+                loadout[self.exportSystemNames[i]]["Input No-Intro DAT"] = self.datFilePathChoices[i].get()
+                loadout[self.exportSystemNames[i]]["Input Romset"] = self.romsetFolderPathChoices[i].get()
+                loadout[self.exportSystemNames[i]]["Output Directory"] = self.outputFolderDirectoryChoices[i].get()
+                loadout[self.exportSystemNames[i]]["Output Type"] = self.outputTypeChoices[i].get()
+                loadout[self.exportSystemNames[i]]["Include Games from Non-Primary Regions"] = str(self.includeOtherRegionsChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Rom List"] = self.romListFileChoices[i].get()
+                loadout[self.exportSystemNames[i]]["Include Unlicensed"] = str(self.includeUnlicensedChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include Unreleased"] = str(self.includeUnreleasedChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include Compilations"] = str(self.includeCompilationsChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include Test Programs"] = str(self.includeTestProgramsChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include BIOS"] = str(self.includeBIOSChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include NES Ports"] = str(self.includeNESPortsChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include GBA Video"] = str(self.includeGBAVideoChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Extract Compressed Roms"] = str(self.extractArchivesChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Create Game Folder for Each Game"] = str(self.parentFolderChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Create Region Folders"] = str(self.sortByPrimaryRegionChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Do Not Create Folder for Primary Region"] = str(self.primaryRegionInRootChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Create Folders for Special Categories"] = str(self.specialCategoryFolderChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Overwrite Duplicate Files"] = str(self.overwriteDuplicatesChoices[i].get())
+            with open(loadoutFile, 'w') as lf:
+                loadout.write(lf)
+
+    def export_loadSystemLoadout(self):
+        if self.exportTabNum > 0:
+            if not askyesno("EzRO", "This will replace your current system loadout. Continue?"):
+                return
+        loadoutFile = askopenfilename(filetypes=[("System Loadouts", "*.txt")])
+        if loadoutFile == "":
+            return
+        if self.exportTabNum > 0:
+            while self.exportTabNum > 0:
+                self.export_removeSystem()
+        loadout = configparser.ConfigParser(allow_no_value=True)
+        loadout.optionxform = str
+        loadout.read(loadoutFile)
+        for key in loadout.keys():
+            if key in systemNamesDict.keys():
+                self.addSystemTab(systemName=key, datFilePath=loadout[key]["Input No-Intro DAT"], romsetFolderPath=loadout[key]["Input Romset"], outputFolderDirectory=loadout[key]["Output Directory"],
+                    outputType=loadout[key]["Output Type"], includeOtherRegions=loadout[key]["Include Games from Non-Primary Regions"], romList=loadout[key]["Rom List"],
+                    includeUnlicensed=loadout[key]["Include Unlicensed"], includeUnreleased=loadout[key]["Include Unreleased"], includeCompilations=loadout[key]["Include Compilations"],
+                    includeTestPrograms=loadout[key]["Include Test Programs"], includeBIOS=loadout[key]["Include BIOS"], includeNESPorts=loadout[key]["Include NES Ports"],
+                    includeGBAVideo=loadout[key]["Include GBA Video"], extractArchives=loadout[key]["Extract Compressed Roms"], parentFolder=loadout[key]["Create Game Folder for Each Game"],
+                    sortByPrimaryRegion=loadout[key]["Create Region Folders"], primaryRegionInRoot=loadout[key]["Do Not Create Folder for Primary Region"],
+                    specialCategoryFolder=loadout[key]["Create Folders for Special Categories"], overwriteDuplicates=loadout[key]["Overwrite Duplicate Files"])
+
     def export_addSystem(self):
         currSystemChoice = self.systemChoice.get()
         if (currSystemChoice.replace("-","").replace("=","") != ""):
             for es in self.Export_Systems.tabs():
                 if self.Export_Systems.tab(es, "text") == currSystemChoice:
                     return
-            self.addSystemTab(currSystemChoice)
+            self.addSystemTab(systemName=currSystemChoice, datFilePath="", romsetFolderPath="", outputFolderDirectory="",
+                outputType="All", includeOtherRegions=self.g_includeOtherRegions.get(), romList="",
+                includeUnlicensed=self.g_includeUnlicensed.get(), includeUnreleased=self.g_includeUnreleased.get(), includeCompilations=self.g_includeCompilations.get(),
+                includeTestPrograms=self.g_includeTestPrograms.get(), includeBIOS=self.g_includeBIOS.get(), includeNESPorts=self.g_includeNESPorts.get(),
+                includeGBAVideo=self.g_includeGBAVideo.get(), extractArchives=False, parentFolder=self.g_parentFolder.get(),
+                sortByPrimaryRegion=self.g_sortByPrimaryRegion.get(), primaryRegionInRoot=self.g_primaryRegionInRoot.get(),
+                specialCategoryFolder=self.g_specialCategoryFolder.get(), overwriteDuplicates=self.g_overwriteDuplicates.get())
         pass
 
     def export_setOutputType(self, event=None):
