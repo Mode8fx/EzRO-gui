@@ -12,6 +12,7 @@ except:
     from tkinter.messagebox import showinfo, showerror, askyesno
     from tkinter import Toplevel
     from tkinter.filedialog import askopenfilename, asksaveasfilename
+from Libraries.ttkScrollableNotebook.ScrollableNotebook import *
 from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
@@ -57,6 +58,7 @@ class EzroApp:
         helpMenu.add_command(label="View Help...", command=self.menu_viewHelp)
         helpMenu.add_separator()
         helpMenu.add_command(label="About...", command=self.menu_viewAbout)
+        helpMenu.add_command(label="External Libraries...", command=self.menu_viewExternalLibraries)
         menubar.add_cascade(label="Help", menu=helpMenu)
         tk_root.config(menu=menubar)
 
@@ -79,7 +81,7 @@ class EzroApp:
         self.Export_LoadLayout_Button.configure(text='Load System Tabs')
         self.Export_LoadLayout_Button.place(anchor='w', relx='.76', rely='.075', x='0', y='0')
         self.Export_LoadLayout_Button.configure(command=self.export_loadSystemLoadout)
-        self.Export_Systems = ttk.Notebook(self.Export_Frame)
+        self.Export_Systems = ScrollableNotebook(self.Export_Frame, wheelscroll=True, tabmenu=True)
 
         self.initVars()
 
@@ -638,7 +640,7 @@ class EzroApp:
         pass
 
     def export_setOutputType(self, event=None):
-        currIndex = self.Export_Systems.index(self.Export_Systems.select())
+        currIndex = self.Export_Systems.index("current")
         currOutputType = self.outputTypeChoices[currIndex].get()
         if currOutputType == "1G1R":
             self.Export_includeOtherRegions_[currIndex].grid(column='0', padx='20', pady='10', row='4', sticky='w')
@@ -652,16 +654,16 @@ class EzroApp:
             self.Export_FromList_PathChooser_[currIndex].grid_remove()
 
     def export_togglePrimaryRegionInRoot(self):
-        currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
+        currSystemIndex = self.Export_Systems.index("current")
         if self.sortByPrimaryRegionChoices[currSystemIndex].get():
             self.Export_PrimaryRegionInRoot_[currSystemIndex].configure(state='enabled')
         else:
             self.Export_PrimaryRegionInRoot_[currSystemIndex].configure(state='disabled')
 
     def export_removeSystem(self):
-        currSystemIndex = self.Export_Systems.index(self.Export_Systems.select())
+        currSystemIndex = self.Export_Systems.index("current")
 
-        self.Export_Systems.forget(self.Export_ScrolledFrame_[currSystemIndex])
+        self.Export_Systems.forget(self.Export_Systems.tabs()[currSystemIndex])
 
         self.exportSystemNames.pop(currSystemIndex)
         self.Export_ScrolledFrame_.pop(currSystemIndex)
@@ -703,10 +705,11 @@ class EzroApp:
         self.Export_ParentFolder_.pop(currSystemIndex)
         self.parentFolderChoices.pop(currSystemIndex)
         self.Export_SortByPrimaryRegion_.pop(currSystemIndex)
-        self.Export_SpecialCategoryFolder_.pop(currSystemIndex)
         self.sortByPrimaryRegionChoices.pop(currSystemIndex)
         self.Export_PrimaryRegionInRoot_.pop(currSystemIndex)
         self.primaryRegionInRootChoices.pop(currSystemIndex)
+        self.Export_SpecialCategoryFolder_.pop(currSystemIndex)
+        self.specialCategoryFolderChoices.pop(currSystemIndex)
         self.Export_OverwriteDuplicates_.pop(currSystemIndex)
         self.overwriteDuplicatesChoices.pop(currSystemIndex)
         self.Export_RemoveSystem_.pop(currSystemIndex)
@@ -719,7 +722,7 @@ class EzroApp:
 
     def export_auditSystem(self):
         if self.exportTabNum > 0:
-            currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
+            currSystemIndex = [self.Export_Systems.index("current")]
             if self.auditCheck(currSystemIndex):
                 self.openAuditWindow(numSystems=1, systemIndexList=currSystemIndex)
 
@@ -811,7 +814,7 @@ class EzroApp:
 
     def export_exportSystem(self):
         if self.exportTabNum > 0:
-            currSystemIndex = [self.Export_Systems.index(self.Export_Systems.select())]
+            currSystemIndex = [self.Export_Systems.index("current")]
             if self.exportCheck(currSystemIndex):
                 self.openExportWindow(numSystems=1, systemIndexList=currSystemIndex)
 
@@ -1986,7 +1989,10 @@ class EzroApp:
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
 
     def menu_viewAbout(self):
-        showinfo("About", "EzRO Rom Organizer v1.00\n\nhttps://github.com/Mips96/EzRO-gui")
+        showinfo("About", "EzRO Rom Organizer v1.00\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
+
+    def menu_viewExternalLibraries(self):
+        showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nGPL-3.0 License")
 
 
 
