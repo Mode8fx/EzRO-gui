@@ -31,6 +31,7 @@ import configparser
 from dateutil.parser import parse as dateParse
 import binascii
 from time import sleep
+from datetime import datetime
 from SystemNames import systemNamesDict
 
 progFolder = getCurrFolder()
@@ -41,7 +42,7 @@ defaultSettingsFile = path.join(progFolder, "settings.ini")
 regionsFile = path.join(progFolder, "regions.ini")
 logFolder = path.join(progFolder, "Logs")
 
-systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys()])
+systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys() if systemNamesDict[sn][0] != "Advanced"])
 
 
 
@@ -67,19 +68,24 @@ class EzroApp:
         self.Export_Frame = ttk.Frame(self.Main_Notebook)
         self.Export_System_Combobox = ttk.Combobox(self.Export_Frame)
         self.systemChoice = tk.StringVar(value='')
-        self.Export_System_Combobox.configure(state='readonly', textvariable=self.systemChoice, values=systemListStr, width='50')
+        self.Export_System_Combobox.configure(state='readonly', textvariable=self.systemChoice, values=systemListStr, width='50', height=25)
         self.Export_System_Combobox.place(anchor='e', relx='.375', rely='.075', x='0', y='0')
         self.Export_System_Button = ttk.Button(self.Export_Frame)
         self.Export_System_Button.configure(text='Add System')
         self.Export_System_Button.place(anchor='e', relx='.45', rely='.075', x='0', y='0')
         self.Export_System_Button.configure(command=self.export_addSystem)
+        self.Export_ShowAdvancedSystems = ttk.Checkbutton(self.Export_Frame)
+        self.showAdvancedSystems = tk.IntVar(value=False)
+        self.Export_ShowAdvancedSystems.configure(text='Show Advanced Systems', variable=self.showAdvancedSystems)
+        self.Export_ShowAdvancedSystems.place(anchor='w', relx='.46', rely='.075', x='0', y='0')
+        self.Export_ShowAdvancedSystems.configure(command=self.export_toggleAdvancedSystems)
         self.Export_SaveLayout_Button = ttk.Button(self.Export_Frame)
         self.Export_SaveLayout_Button.configure(text='Save System Tabs')
-        self.Export_SaveLayout_Button.place(anchor='e', relx='.74', rely='.075', x='0', y='0')
+        self.Export_SaveLayout_Button.place(anchor='e', relx='.78', rely='.075', x='0', y='0')
         self.Export_SaveLayout_Button.configure(command=self.export_saveSystemLoadout)
         self.Export_LoadLayout_Button = ttk.Button(self.Export_Frame)
         self.Export_LoadLayout_Button.configure(text='Load System Tabs')
-        self.Export_LoadLayout_Button.place(anchor='w', relx='.76', rely='.075', x='0', y='0')
+        self.Export_LoadLayout_Button.place(anchor='w', relx='.80', rely='.075', x='0', y='0')
         self.Export_LoadLayout_Button.configure(command=self.export_loadSystemLoadout)
         self.Export_Systems = ScrollableNotebook(self.Export_Frame, wheelscroll=True, tabmenu=True)
 
@@ -96,7 +102,7 @@ class EzroApp:
         self.Export_AuditAll.place(anchor='w', relx='.15', rely='.925', x='0', y='0')
         self.Export_AuditAll.configure(command=self.export_auditAllSystems)
         self.Export_TestExport = ttk.Checkbutton(self.Export_Frame)
-        self.isTestExport = tk.IntVar(value='')
+        self.isTestExport = tk.IntVar(value=False)
         self.Export_TestExport.configure(text='Test Export', variable=self.isTestExport)
         self.Export_TestExport.place(anchor='e', relx='.72', rely='.925', x='0', y='0')
         self.Export_TestExport.configure(command=self.export_toggleTestExport)
@@ -115,31 +121,32 @@ class EzroApp:
         self.Export_Frame.configure(height='200', width='200')
         self.Export_Frame.pack(side='top')
         self.Main_Notebook.add(self.Export_Frame, text='Export')
-        self.Favorites_Frame = ttk.Frame(self.Main_Notebook)
-        self.Favorites_Load = ttk.Button(self.Favorites_Frame)
-        self.Favorites_Load.configure(text='Load Existing List...')
-        self.Favorites_Load.place(anchor='w', relx='.1', rely='.075', x='0', y='0')
-        self.Favorites_Load.configure(command=self.favorites_loadList)
-        self.Favorites_System_Label = ttk.Label(self.Favorites_Frame)
-        self.Favorites_System_Label.configure(text='System')
-        self.Favorites_System_Label.place(anchor='w', relx='.1', rely='.15', x='0', y='0')
-        self.Favorites_System_Combobox = ttk.Combobox(self.Favorites_Frame)
-        self.favoritesSystemChoice = tk.StringVar(value='')
-        self.Favorites_System_Combobox.configure(state='readonly', textvariable=self.favoritesSystemChoice, values=systemListStr, width='50')
-        self.Favorites_System_Combobox.place(anchor='w', relx='.15', rely='.15', x='0', y='0')
-        self.Favorites_List = EditableTreeview(self.Favorites_Frame)
-        self.Favorites_List.place(anchor='nw', relheight='.65', relwidth='.8', relx='.1', rely='.2', x='0', y='0')
-        self.Favorites_Add = ttk.Button(self.Favorites_Frame)
-        self.Favorites_Add.configure(text='Add Files...')
-        self.Favorites_Add.place(anchor='w', relx='.1', rely='.925', x='0', y='0')
-        self.Favorites_Add.configure(command=self.favorites_addFiles)
-        self.Favorites_Save = ttk.Button(self.Favorites_Frame)
-        self.Favorites_Save.configure(text='Save List As...')
-        self.Favorites_Save.place(anchor='e', relx='.9', rely='.925', x='0', y='0')
-        self.Favorites_Save.configure(command=self.favorites_saveList)
-        self.Favorites_Frame.configure(height='200', width='200')
-        self.Favorites_Frame.pack(side='top')
-        self.Main_Notebook.add(self.Favorites_Frame, text='Favorites')
+        # Favorites Tab is unused
+        # self.Favorites_Frame = ttk.Frame(self.Main_Notebook)
+        # self.Favorites_Load = ttk.Button(self.Favorites_Frame)
+        # self.Favorites_Load.configure(text='Load Existing List...')
+        # self.Favorites_Load.place(anchor='w', relx='.1', rely='.075', x='0', y='0')
+        # self.Favorites_Load.configure(command=self.favorites_loadList)
+        # self.Favorites_System_Label = ttk.Label(self.Favorites_Frame)
+        # self.Favorites_System_Label.configure(text='System')
+        # self.Favorites_System_Label.place(anchor='w', relx='.1', rely='.15', x='0', y='0')
+        # self.Favorites_System_Combobox = ttk.Combobox(self.Favorites_Frame)
+        # self.favoritesSystemChoice = tk.StringVar(value='')
+        # self.Favorites_System_Combobox.configure(state='readonly', textvariable=self.favoritesSystemChoice, values=systemListStr, width='50')
+        # self.Favorites_System_Combobox.place(anchor='w', relx='.15', rely='.15', x='0', y='0')
+        # self.Favorites_List = EditableTreeview(self.Favorites_Frame)
+        # self.Favorites_List.place(anchor='nw', relheight='.65', relwidth='.8', relx='.1', rely='.2', x='0', y='0')
+        # self.Favorites_Add = ttk.Button(self.Favorites_Frame)
+        # self.Favorites_Add.configure(text='Add Files...')
+        # self.Favorites_Add.place(anchor='w', relx='.1', rely='.925', x='0', y='0')
+        # self.Favorites_Add.configure(command=self.favorites_addFiles)
+        # self.Favorites_Save = ttk.Button(self.Favorites_Frame)
+        # self.Favorites_Save.configure(text='Save List As...')
+        # self.Favorites_Save.place(anchor='e', relx='.9', rely='.925', x='0', y='0')
+        # self.Favorites_Save.configure(command=self.favorites_saveList)
+        # self.Favorites_Frame.configure(height='200', width='200')
+        # self.Favorites_Frame.pack(side='top')
+        # self.Main_Notebook.add(self.Favorites_Frame, text='Favorites')
         self.Config_Frame = ttk.Frame(self.Main_Notebook)
         self.Config_Default_SaveChanges = ttk.Button(self.Config_Frame)
         self.Config_Default_SaveChanges.configure(text='Save Changes')
@@ -162,36 +169,36 @@ class EzroApp:
         self.Config_Default_RomsetDir_PathChooser.configure(textvariable=self.g_romsetFolderPath, type='directory')
         self.Config_Default_RomsetDir_PathChooser.grid(column='0', ipadx='75', padx='200', pady='10', row='1', sticky='w')
         self.Config_Default_IncludeOtherRegions = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_includeOtherRegions = tk.IntVar(value='')
+        self.g_includeOtherRegions = tk.IntVar(value=False)
         self.Config_Default_IncludeOtherRegions.configure(text='(1G1R) Include Games from Non-Primary Regions', variable=self.g_includeOtherRegions)
         self.Config_Default_IncludeOtherRegions.grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Config_Default_Include = ttk.Labelframe(self.Config_Default_Frame)
         self.Config_Default_IncludeUnlicensed = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeUnlicensed = tk.IntVar(value='')
+        self.g_includeUnlicensed = tk.IntVar(value=False)
         self.Config_Default_IncludeUnlicensed.configure(text='Unlicensed', variable=self.g_includeUnlicensed)
         self.Config_Default_IncludeUnlicensed.grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeUnreleased = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeUnreleased = tk.IntVar(value='')
+        self.g_includeUnreleased = tk.IntVar(value=False)
         self.Config_Default_IncludeUnreleased.configure(text='Unreleased', variable=self.g_includeUnreleased)
         self.Config_Default_IncludeUnreleased.grid(column='1', padx='0', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeCompilations = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeCompilations = tk.IntVar(value='')
+        self.g_includeCompilations = tk.IntVar(value=False)
         self.Config_Default_IncludeCompilations.configure(text='Compilations', variable=self.g_includeCompilations)
         self.Config_Default_IncludeCompilations.grid(column='2', padx='37', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeTestPrograms = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeTestPrograms = tk.IntVar(value='')
+        self.g_includeTestPrograms = tk.IntVar(value=False)
         self.Config_Default_IncludeTestPrograms.configure(text='Test Programs', variable=self.g_includeTestPrograms)
         self.Config_Default_IncludeTestPrograms.grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Config_Default_IncludeBIOS = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeBIOS = tk.IntVar(value='')
+        self.g_includeBIOS = tk.IntVar(value=False)
         self.Config_Default_IncludeBIOS.configure(text='BIOS', variable=self.g_includeBIOS)
         self.Config_Default_IncludeBIOS.grid(column='1', padx='0', pady='10', row='1', sticky='w')
         self.Config_Default_IncludeNESPorts = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeNESPorts = tk.IntVar(value='')
+        self.g_includeNESPorts = tk.IntVar(value=False)
         self.Config_Default_IncludeNESPorts.configure(text='(GBA) NES Ports', variable=self.g_includeNESPorts)
         self.Config_Default_IncludeNESPorts.grid(column='0', padx='20', pady='10', row='2', sticky='w')
         self.Config_Default_IncludeGBAVideo = ttk.Checkbutton(self.Config_Default_Include)
-        self.g_includeGBAVideo = tk.IntVar(value='')
+        self.g_includeGBAVideo = tk.IntVar(value=False)
         self.Config_Default_IncludeGBAVideo.configure(text='GBA Video', variable=self.g_includeGBAVideo)
         self.Config_Default_IncludeGBAVideo.grid(column='1', padx='0', pady='10', row='2', sticky='w')
         self.Config_Default_Include.configure(text='Include')
@@ -200,27 +207,27 @@ class EzroApp:
         self.Config_Default_Separator.configure(orient='vertical')
         self.Config_Default_Separator.place(anchor='center', relheight='.95', relx='.5', rely='.5', x='0', y='0')
         self.Config_Default_ExtractArchives = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_extractArchives = tk.IntVar(value='')
+        self.g_extractArchives = tk.IntVar(value=False)
         self.Config_Default_ExtractArchives.configure(text='Extract Compressed Roms', variable=self.g_extractArchives)
         self.Config_Default_ExtractArchives.place(anchor='nw', relx='.651', rely='.03', x='0', y='0')
         self.Config_Default_ParentFolder = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_parentFolder = tk.IntVar(value='')
+        self.g_parentFolder = tk.IntVar(value=False)
         self.Config_Default_ParentFolder.configure(text='Create Game Folder for Each Game', variable=self.g_parentFolder)
         self.Config_Default_ParentFolder.place(anchor='nw', relx='.651', rely='.132', x='0', y='0')
         self.Config_Default_SortByPrimaryRegion = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_sortByPrimaryRegion = tk.IntVar(value='')
+        self.g_sortByPrimaryRegion = tk.IntVar(value=False)
         self.Config_Default_SortByPrimaryRegion.configure(text='Create Region Folders', variable=self.g_sortByPrimaryRegion)
         self.Config_Default_SortByPrimaryRegion.place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
         self.Config_Default_PrimaryRegionInRoot = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_primaryRegionInRoot = tk.IntVar(value='')
+        self.g_primaryRegionInRoot = tk.IntVar(value=False)
         self.Config_Default_PrimaryRegionInRoot.configure(text='Do Not Create Folder for Primary Region', variable=self.g_primaryRegionInRoot)
         self.Config_Default_PrimaryRegionInRoot.place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
         self.Config_Default_SpecialCategoryFolder = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_specialCategoryFolder = tk.IntVar(value='')
+        self.g_specialCategoryFolder = tk.IntVar(value=False)
         self.Config_Default_SpecialCategoryFolder.configure(text='Create Folders for Special Categories', variable=self.g_specialCategoryFolder)
         self.Config_Default_SpecialCategoryFolder.place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
         self.Config_Default_OverwriteDuplicates = ttk.Checkbutton(self.Config_Default_Frame)
-        self.g_overwriteDuplicates = tk.IntVar(value='')
+        self.g_overwriteDuplicates = tk.IntVar(value=False)
         self.Config_Default_OverwriteDuplicates.configure(text='Overwrite Duplicate Files', variable=self.g_overwriteDuplicates)
         self.Config_Default_OverwriteDuplicates.place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
         self.Config_Default_Frame.configure(height='200', width='200')
@@ -272,6 +279,7 @@ class EzroApp:
         self.Main_Notebook.configure(height='675', width='1200')
         self.Main_Notebook.grid(column='0', row='0')
         # Tooltips
+        tooltip.create(self.Export_ShowAdvancedSystems, 'Show systems that are difficult or uncommon to emulate, and systems that often do not make use of No-Intro DAT files.')
         tooltip.create(self.Export_TestExport, 'For testing; if enabled, roms will NOT be exported. This allows you to see how many roms would be exported and how much space they would take up without actually exporting anything.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_DATDir_Label, 'The directory containing No-Intro DAT files for each system. These contain information about each rom, which is used in both exporting and auditing.\n\nIf this is provided, the \"Export\" tab will attempt to automatically match DAT files from this directory with each system so you don\'t have to input them manually.')
         tooltip.create(self.Config_Default_RomsetDir_Label, 'The directory containing your rom directories for each system.\n\nIf this is provided, the \"Export\" tab will attempt to automatically match folders from this directory with each system so you don\'t have to input them manually.')
@@ -370,6 +378,14 @@ class EzroApp:
         self.Config_Region_Choice_Tags_Label_ = []
         self.Config_Region_Choice_Tags_Entry_ = []
         self.regionTags = []
+
+    def export_toggleAdvancedSystems(self):
+        global systemListStr
+        if self.showAdvancedSystems.get():
+            systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys()])
+        else:
+            systemListStr = "\"\" "+" ".join(["\""+sn+"\"" for sn in systemNamesDict.keys() if systemNamesDict[sn][0] != "Advanced"])
+        self.Export_System_Combobox.configure(values=systemListStr)
 
     def addSystemTab(self, systemName="New System", datFilePath="", romsetFolderPath="", outputFolderDirectory="",
             outputType="All", includeOtherRegions=False, romList="",
@@ -525,7 +541,7 @@ class EzroApp:
             return
         if self.ssdHelper(systemName):
             return
-        alternateSystemNames = systemNamesDict.get(systemName)
+        alternateSystemNames = systemNamesDict.get(systemName)[1]
         if alternateSystemNames is not None:
             for name in alternateSystemNames:
                 if self.ssdHelper(name):
@@ -550,7 +566,7 @@ class EzroApp:
             return
         if self.sirdHelper(systemName):
             return
-        alternateSystemNames = systemNamesDict.get(systemName)
+        alternateSystemNames = systemNamesDict.get(systemName)[1]
         if alternateSystemNames is not None:
             for name in alternateSystemNames:
                 if self.sirdHelper(name):
@@ -739,21 +755,21 @@ class EzroApp:
             currSystemDAT = self.datFilePathChoices[ind].get()
             currSystemFolder = self.romsetFolderPathChoices[ind].get()
             if currSystemDAT == "":
-                failureMessage += currSystemName+": Missing DAT file.\n"
+                failureMessage += currSystemName+":\nMissing DAT file.\n\n"
             elif not path.isfile(currSystemDAT):
-                failureMessage += currSystemName+": Invalid DAT file (file not found).\n"
+                failureMessage += currSystemName+":\nInvalid DAT file (file not found).\n\n"
             else:
                 tree = ET.parse(currSystemDAT)
                 treeRoot = tree.getroot()
                 systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
                 if systemNameFromDAT is None or systemNameFromDAT == "":
-                    failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                    failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
                 if systemNameFromDAT != currSystemName:
-                    failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
+                    failureMessage += currSystemName+":\nInvalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n\n"
             if currSystemFolder == "":
-                failureMessage += currSystemName+": Missing input romset.\n"
+                failureMessage += currSystemName+":\nMissing input romset.\n\n"
             elif not path.isdir(currSystemFolder):
-                failureMessage += currSystemName+": Invalid input romset (directory not found).\n"
+                failureMessage += currSystemName+":\nInvalid input romset (directory not found).\n\n"
         if failureMessage == "":
             return True
         showinfo("Invalid Parameters", "Please fix the following issues before attempting an audit:\n\n"+failureMessage.strip())
@@ -1016,7 +1032,7 @@ class EzroApp:
             numNoCRC = len(romsWithoutCRCMatch)
             if numNoCRC > 0:
                 self.writeTextToSubProgress("NOTICE: "+str(numNoCRC)+pluralize(" file", numNoCRC)+" in this system folder "+pluralize("do", numNoCRC, "es", "")+" not have a matching entry in the provided DAT file.\n")
-                self.writeTextToSubProgress(pluralize("", numNoCRC, "This file", "These files")+" may be ignored when exporting this system's romset to another device.\n\n")
+                self.writeTextToSubProgress(pluralize("", numNoCRC, "This file", "These files")+" may be ignored when exporting this system's romset.\n\n")
                 # if moveUnverified == 1:
                 #     numMoved = 0
                 #     unverifiedFolder = path.join(currSystemFolder, "[Unverified]")
@@ -1120,6 +1136,7 @@ class EzroApp:
             self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName+"\n\n")
 
     def createSystemAuditLog(self, xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName):
+        currTime = datetime.now().isoformat(timespec='seconds').replace(":", ".")
         xmlRomsInSet.sort()
         xmlRomsNotInSet.sort()
         romsWithoutCRCMatch.sort()
@@ -1128,7 +1145,7 @@ class EzroApp:
         numNotInSet = len(xmlRomsNotInSet)
         numNoCRC = len(romsWithoutCRCMatch)
         createDir(logFolder)
-        auditLogFile = open(path.join(logFolder, "Audit ("+currSystemName+") ["+str(numOverlap)+" out of "+str(numOverlap+numNotInSet)+"] ["+str(numNoCRC)+" unverified].txt"), "w", encoding="utf-8", errors="replace")
+        auditLogFile = open(path.join(logFolder, currTime+" Audit ("+currSystemName+") ["+str(numOverlap)+" out of "+str(numOverlap+numNotInSet)+"] ["+str(numNoCRC)+" unverified].txt"), "w", encoding="utf-8", errors="replace")
         auditLogFile.writelines("=== "+currSystemName+" ===\n")
         auditLogFile.writelines("=== This romset contains "+str(numOverlap)+" of "+str(numOverlap+numNotInSet)+" known ROMs ===\n\n")
         if numOverlap > 0:
@@ -1172,7 +1189,7 @@ class EzroApp:
         global currSystemName, currSystemSourceFolder, currSystemTargetFolder, currSystemDAT, romsetCategory
         global includeOtherRegions, includeUnlicensed, includeUnreleased, includeCompilations, includeGBAVideo, includeNESPorts
         global extractArchives, exportToGameParentFolder, sortByPrimaryRegion, primaryRegionInRoot, specialCategoryFolder, overwriteDuplicates
-        global ignoredFolders, primaryRegions
+        global ignoredFolders, primaryRegions, favoritesList
         global export_regionGroupNames, export_regionPriorityTypes, export_regionTags
 
         if not self.recentlyVerified:
@@ -1212,6 +1229,7 @@ class EzroApp:
             currSystemSourceFolder = self.romsetFolderPathChoices[currIndex].get()
             currSystemTargetFolder = self.outputFolderDirectoryChoices[currIndex].get()
             romsetCategory = self.outputTypeChoices[currIndex].get()
+            favoritesFile = self.romListFileChoices[currIndex].get()
             includeOtherRegions = self.includeOtherRegionsChoices[currIndex].get()
             includeUnlicensed = self.includeUnlicensedChoices[currIndex].get()
             includeUnreleased = self.includeUnreleasedChoices[currIndex].get()
@@ -1245,6 +1263,12 @@ class EzroApp:
             for i in range(len(export_regionGroupNames)):
                 if export_regionPriorityTypes[i] == "Primary":
                     primaryRegions.append(export_regionGroupNames[i])
+            favoritesList = {}
+            if romsetCategory == "Favorites":
+                with open(favoritesFile, 'r') as ff:
+                    for line in ff.readlines():
+                        if line.strip() != "" and not line.startswith("#"):
+                            favoritesList[line.strip()] = False
             self.checkSystemDATForClones()
             self.generateGameRomDict(currIndex)
             numCopiedBytesMain += self.copyMainRomset(currIndex)
@@ -1505,7 +1529,7 @@ class EzroApp:
         return False
 
     def copyMainRomset(self, currIndex):
-        global gameRomDict, currGameFolder
+        global gameRomDict, currGameFolder, romsetCategory, favoritesList, missingFavorites
         numGames = len(gameRomDict.keys())
         self.romsCopied = []
         self.numRomsSkipped = 0
@@ -1530,20 +1554,31 @@ class EzroApp:
                     currGameFolder = path.join(currGameFolder, "["+folder+"]")
             if exportToGameParentFolder:
                 currGameFolder = path.join(currGameFolder, game)
-            if romsetCategory == "All":
+            if romsetCategory in ["All", "Favorites"]:
                 for rom in gameRomDict[game]:
-                    self.copyRomToTarget(rom)
+                    if romsetCategory == "All":
+                        self.copyRomToTarget(rom)
+                    elif path.splitext(rom)[0] in favoritesList.keys():
+                        self.copyRomToTarget(rom)
+                        favoritesList[path.splitext(rom)[0]] = True
             elif romsetCategory == "1G1R" or bestRegionIsPrimary:
                 self.copyRomToTarget(bestRom)
-        self.createMainCopiedLog(currIndex, "Export" if self.isExport else "Test")
+        missingFavorites = []
         if self.isExport:
             self.writeTextToSubProgress("Copied "+str(len(self.romsCopied))+" new files.\n")
-            self.writeTextToSubProgress("Skipped "+str(self.numRomsSkipped)+" files that already exist on this device.\n")
+            self.writeTextToSubProgress("Skipped "+str(self.numRomsSkipped)+" files that already exist in the output directory.\n")
             self.writeTextToSubProgress("Failed to copy "+str(len(self.romsFailed))+" new files.\n")
+            if romsetCategory == "Favorites":
+                for rom in favoritesList.keys():
+                    if favoritesList[rom] == False:
+                        missingFavorites.append(rom)
+                if len(missingFavorites) > 0:
+                    self.writeTextToSubProgress(str(len(missingFavorites))+" roms from favorites list were not copied because they were not found in the input romset.\n")
         else:
             self.writeTextToSubProgress(str(len(self.romsCopied))+" new files would be copied.\n")
             self.writeTextToSubProgress(str(self.numRomsSkipped)+" old files would be skipped.\n")
         self.writeTextToSubProgress("Export Size: "+simplifyNumBytes(self.currNumCopiedBytes)+"\n\n")
+        self.createMainCopiedLog(currIndex, "Export" if self.isExport else "Test")
         return self.currNumCopiedBytes
 
     def copyRomToTarget(self, rom):
@@ -1602,16 +1637,21 @@ class EzroApp:
         return currSpecialFolders
 
     def createMainCopiedLog(self, currIndex, logType="Export"):
+        currTime = datetime.now().isoformat(timespec='seconds').replace(":", ".")
         if len(self.romsCopied) + len(self.romsFailed) > 0:
             self.romsCopied.sort()
             self.romsFailed.sort()
-            romsetLogFile = open(path.join(logFolder, logType+" Main ("+currSystemName+") ("+"deviceName"+") ["+str(len(self.romsCopied))+"] ["+str(len(self.romsFailed))+"].txt"), "w", encoding="utf-8", errors="replace")
-            romsetLogFile.writelines("=== Copied "+str(len(self.romsCopied))+" new ROMs from "+currSystemName+" to "+"deviceName"+" ===\n\n")
+            romsetLogFile = open(path.join(logFolder, currTime+" "+logType+" ("+currSystemName+") ["+str(len(self.romsCopied))+"] ["+str(len(self.romsFailed)+len(missingFavorites))+"].txt"), "w", encoding="utf-8", errors="replace")
+            romsetLogFile.writelines("=== Copied "+str(len(self.romsCopied))+" new ROMs from \""+currSystemSourceFolder+"\" to \""+currSystemTargetFolder+"\" ===\n\n")
             for file in self.romsCopied:
                 romsetLogFile.writelines(file+"\n")
             if len(self.romsFailed) > 0:
                 romsetLogFile.writelines("\n= FAILED TO COPY =\n")
                 for file in self.romsFailed:
+                    romsetLogFile.writelines(file+"\n")
+            if len(missingFavorites) > 0:
+                romsetLogFile.writelines("\n= FAVORITES NOT FOUND IN INPUT =\n")
+                for file in missingFavorites:
                     romsetLogFile.writelines(file+"\n")
             romsetLogFile.close()
 
