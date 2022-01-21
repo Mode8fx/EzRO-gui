@@ -384,7 +384,7 @@ class EzroApp:
         self.Export_DAT_Label_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='0', sticky='w')
         self.Export_DAT_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.setSystemDAT(systemName, datFilePath)
-        self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file')
+        self.Export_DAT_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.datFilePathChoices[self.exportTabNum], type='file', filetypes=[('DAT Files', '*.dat')])
         self.Export_DAT_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='0', sticky='w')
         self.Export_Romset_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_Romset_Label_[self.exportTabNum].configure(text='Input Romset')
@@ -429,7 +429,7 @@ class EzroApp:
         self.Export_FromList_PathChooser_.append(PathChooserInput(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.romListFileChoices.append(tk.StringVar(value=''))
         self.romListFileChoices[self.exportTabNum].set(romList)
-        self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file')
+        self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file', filetypes=[('Text Files', '*.txt')])
         self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='5', sticky='w')
         self.Export_IncludeFrame_.append(ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_IncludeUnlicensed_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
@@ -835,13 +835,16 @@ class EzroApp:
             elif not path.isfile(currSystemDAT):
                 failureMessage += currSystemName+": Invalid DAT file (file not found).\n"
             else:
-                tree = ET.parse(currSystemDAT)
-                treeRoot = tree.getroot()
-                systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
-                if systemNameFromDAT is None or systemNameFromDAT == "":
+                try:
+                    tree = ET.parse(currSystemDAT)
+                    treeRoot = tree.getroot()
+                    systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
+                    if systemNameFromDAT is None or systemNameFromDAT == "":
+                        failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                    if systemNameFromDAT != currSystemName:
+                        failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
+                except:
                     failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
-                if systemNameFromDAT != currSystemName:
-                    failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
 
             currSystemFolder = self.romsetFolderPathChoices[ind].get()
             if currSystemFolder == "":
@@ -854,6 +857,9 @@ class EzroApp:
                 failureMessage += currSystemName+": Missing output directory.\n"
             elif not path.isdir(currOutputFolder):
                 failureMessage += currSystemName+": Invalid output directory (directory not found).\n"
+
+            if (not (currSystemFolder == "" or currOutputFolder == "")) and (currSystemFolder == currOutputFolder):
+                failureMessage += currSystemName+": Input and output directories are the same.\n"
 
             currOutputType = self.outputTypeChoices[ind].get()
             if currOutputType == "Favorites":
