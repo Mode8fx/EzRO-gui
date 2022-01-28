@@ -32,7 +32,13 @@ from dateutil.parser import parse as dateParse
 import binascii
 from time import sleep
 from datetime import datetime
-from SystemNames import systemNamesDict
+
+tk.Tk().withdraw()
+try:
+    from SystemNames import *
+except:
+    showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
+    from SystemNamesDefault import *
 
 progFolder = getCurrFolder()
 sys.path.append(progFolder)
@@ -187,7 +193,7 @@ class EzroApp:
         self.Config_Default_IncludeCompilations.grid(column='2', padx='37', pady='10', row='0', sticky='w')
         self.Config_Default_IncludeTestPrograms = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeTestPrograms = tk.IntVar(value=False)
-        self.Config_Default_IncludeTestPrograms.configure(text='Test Programs', variable=self.g_includeTestPrograms)
+        self.Config_Default_IncludeTestPrograms.configure(text='Misc. Programs', variable=self.g_includeTestPrograms)
         self.Config_Default_IncludeTestPrograms.grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Config_Default_IncludeBIOS = ttk.Checkbutton(self.Config_Default_Include)
         self.g_includeBIOS = tk.IntVar(value=False)
@@ -290,12 +296,14 @@ class EzroApp:
         tooltip.create(self.Config_Default_SpecialCategoryFolder, 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_IncludeOtherRegions, '(Only applies to 1G1R export.)\n\nIf enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
+        tooltip.create(self.Config_Default_IncludeTestPrograms, 'Include non-game programs such as test programs, SDK files, and SNES enhancement chips.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_IncludeNESPorts, '(Only applies to GBA.)\n\nInclude Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.')
         tooltip.create(self.Config_Default_IncludeGBAVideo, '(Only applies to GBA.)')
         tooltip.create(self.Config_Region_Choice_Name_Label_Tertiary, 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
         tooltip.create(self.Config_Region_Choice_Type_Label_Tertiary, 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Non-Primary Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
         # Main widget
         self.mainwindow = self.Main_Notebook
+        master.protocol("WM_DELETE_WINDOW", sys.exit) # Why does this not work automatically?
         # Other initialization
         self.g_specificAttributes = []
         self.g_generalAttributes = []
@@ -462,7 +470,7 @@ class EzroApp:
         self.Export_IncludeCompilations_[self.exportTabNum].grid(column='2', padx='37', pady='10', row='0', sticky='w')
         self.Export_IncludeTestPrograms_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
         self.includeTestProgramsChoices.append(tk.IntVar(value=includeTestPrograms))
-        self.Export_IncludeTestPrograms_[self.exportTabNum].configure(text='Test Programs', variable=self.includeTestProgramsChoices[self.exportTabNum])
+        self.Export_IncludeTestPrograms_[self.exportTabNum].configure(text='Misc. Programs', variable=self.includeTestProgramsChoices[self.exportTabNum])
         self.Export_IncludeTestPrograms_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='1', sticky='w')
         self.Export_IncludeBIOS_.append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
         self.includeBIOSChoices.append(tk.IntVar(value=includeBIOS))
@@ -517,6 +525,7 @@ class EzroApp:
         tooltip.create(self.Export_OutputType_Label_[self.exportTabNum], '\"All\": All roms will be exported.\n\n\"1G1R\" (1 Game 1 Rom): Only the latest revision of the highest-priority region group of each game will be exported (e.g. USA Revision 2). See "Region Settings" in Config for more information.\n\n\"Favorites\": Only specific roms from a provided text file will be exported; good for exporting a list of only your favorite roms.')
         tooltip.create(self.Export_includeOtherRegions_[self.exportTabNum], 'If enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         tooltip.create(self.Export_FromList_Label_[self.exportTabNum], 'The text list containing your favorite roms for the current system.')
+        tooltip.create(self.Export_IncludeTestPrograms_[self.exportTabNum], 'Include non-game programs such as test programs, SDK files, and SNES enhancement chips.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_IncludeNESPorts_[self.exportTabNum], 'Include Classic NES Series, Famicom Mini, Hudson Best Collection, and Kunio-kun Nekketsu Collection emulated ports.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
@@ -604,7 +613,7 @@ class EzroApp:
                 loadout[self.exportSystemNames[i]]["Include Unlicensed"] = str(self.includeUnlicensedChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Include Unreleased"] = str(self.includeUnreleasedChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Include Compilations"] = str(self.includeCompilationsChoices[i].get())
-                loadout[self.exportSystemNames[i]]["Include Test Programs"] = str(self.includeTestProgramsChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Include Misc. Programs"] = str(self.includeTestProgramsChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Include BIOS"] = str(self.includeBIOSChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Include NES Ports"] = str(self.includeNESPortsChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Include GBA Video"] = str(self.includeGBAVideoChoices[i].get())
@@ -635,7 +644,7 @@ class EzroApp:
                 self.addSystemTab(systemName=key, datFilePath=loadout[key]["Input No-Intro DAT"], romsetFolderPath=loadout[key]["Input Romset"], outputFolderDirectory=loadout[key]["Output Directory"],
                     outputType=loadout[key]["Output Type"], includeOtherRegions=loadout[key]["Include Games from Non-Primary Regions"], romList=loadout[key]["Rom List"],
                     includeUnlicensed=loadout[key]["Include Unlicensed"], includeUnreleased=loadout[key]["Include Unreleased"], includeCompilations=loadout[key]["Include Compilations"],
-                    includeTestPrograms=loadout[key]["Include Test Programs"], includeBIOS=loadout[key]["Include BIOS"], includeNESPorts=loadout[key]["Include NES Ports"],
+                    includeTestPrograms=loadout[key]["Include Misc. Programs"], includeBIOS=loadout[key]["Include BIOS"], includeNESPorts=loadout[key]["Include NES Ports"],
                     includeGBAVideo=loadout[key]["Include GBA Video"], extractArchives=loadout[key]["Extract Compressed Roms"], parentFolder=loadout[key]["Create Game Folder for Each Game"],
                     sortByPrimaryRegion=loadout[key]["Create Region Folders"], primaryRegionInRoot=loadout[key]["Do Not Create Folder for Primary Region"],
                     specialCategoryFolder=loadout[key]["Create Folders for Special Categories"], overwriteDuplicates=loadout[key]["Overwrite Duplicate Files"])
@@ -772,7 +781,7 @@ class EzroApp:
                 failureMessage += currSystemName+":\nInvalid input romset (directory not found).\n\n"
         if failureMessage == "":
             return True
-        showinfo("Invalid Parameters", "Please fix the following issues before attempting an audit:\n\n"+failureMessage.strip())
+        showerror("Invalid Parameters", "Please fix the following issues before attempting an audit:\n\n"+failureMessage.strip())
         return False
 
     def openAuditWindow(self, numSystems, systemIndexList):
@@ -887,7 +896,7 @@ class EzroApp:
 
         if failureMessage == "":
             return True
-        showinfo("Invalid Parameters", "Please fix the following issues before attempting an export:\n\n"+failureMessage.strip())
+        showerror("Invalid Parameters", "Please fix the following issues before attempting an export:\n\n"+failureMessage.strip())
         return False
 
     def openExportWindow(self, numSystems, systemIndexList):
@@ -1252,7 +1261,7 @@ class EzroApp:
             if not includeCompilations:
                 ignoredFolders.append("Compilation")
             if not includeTestPrograms:
-                ignoredFolders.append("Test Program")
+                ignoredFolders.append("Misc. Programs")
             if not includeBIOS:
                 ignoredFolders.append("BIOS")
             if not includeNESPorts:
@@ -1620,8 +1629,8 @@ class EzroApp:
             currSpecialFolders.append("BIOS")
         if "(Unl" in rom or "(Pirate" in rom:
             currSpecialFolders.append("Unlicensed")
-        if "(Test Program" in rom or "(SDK Build" in rom or "Production Test Program" in rom:
-            currSpecialFolders.append("Test Program")
+        if "(Test Program" in rom or "(SDK Build" in rom or "Production Test Program" in rom or "Enhancement Chip" in rom:
+            currSpecialFolders.append("Misc. Programs")
         if "(Proto" in rom:
             currSpecialFolders.append("Unreleased")
         # if "(Sample" in rom or "(Demo" in rom:
@@ -1900,7 +1909,7 @@ class EzroApp:
         defaultSettings["Include"]["Unlicensed"] = self.ssch(self.g_includeUnlicensed)
         defaultSettings["Include"]["Unreleased"] = self.ssch(self.g_includeUnreleased)
         defaultSettings["Include"]["Compilations"] = self.ssch(self.g_includeCompilations)
-        defaultSettings["Include"]["Test Programs"] = self.ssch(self.g_includeTestPrograms)
+        defaultSettings["Include"]["Misc. Programs"] = self.ssch(self.g_includeTestPrograms)
         defaultSettings["Include"]["BIOS"] = self.ssch(self.g_includeBIOS)
         defaultSettings["Include"]["(GBA) NES Ports"] = self.ssch(self.g_includeNESPorts)
         defaultSettings["Include"]["(GBA) GBA Video"] = self.ssch(self.g_includeGBAVideo)
@@ -1950,7 +1959,7 @@ class EzroApp:
         defaultSettings["Include"]["Unlicensed"] = "True"
         defaultSettings["Include"]["Unreleased"] = "True"
         defaultSettings["Include"]["Compilations"] = "True"
-        defaultSettings["Include"]["Test Programs"] = "False"
+        defaultSettings["Include"]["Misc. Programs"] = "False"
         defaultSettings["Include"]["BIOS"] = "False"
         defaultSettings["Include"]["(GBA) NES Ports"] = "False"
         defaultSettings["Include"]["(GBA) GBA Video"] = "False"
@@ -2000,7 +2009,7 @@ class EzroApp:
             self.g_includeUnlicensed.set(defaultSettings["Include"]["Unlicensed"] == "True")
             self.g_includeUnreleased.set(defaultSettings["Include"]["Unreleased"] == "True")
             self.g_includeCompilations.set(defaultSettings["Include"]["Compilations"] == "True")
-            self.g_includeTestPrograms.set(defaultSettings["Include"]["Test Programs"] == "True")
+            self.g_includeTestPrograms.set(defaultSettings["Include"]["Misc. Programs"] == "True")
             self.g_includeBIOS.set(defaultSettings["Include"]["BIOS"] == "True")
             self.g_includeNESPorts.set(defaultSettings["Include"]["(GBA) NES Ports"] == "True")
             self.g_includeGBAVideo.set(defaultSettings["Include"]["(GBA) GBA Video"] == "True")
@@ -2008,7 +2017,7 @@ class EzroApp:
             self.g_specificAttributes = defaultSettings["Keywords"]["Specific Attributes"]
             self.g_generalAttributes = defaultSettings["Keywords"]["General Attributes"]
         except:
-            showinfo("EzRO", "Invalid settings.ini file. Delete it and reload, then a new default file will be created.")
+            showerror("EzRO", "Invalid settings.ini file. Delete it and reload, then a new default file will be created.")
             sys.exit()
         try:
             regionSettings = configparser.ConfigParser(allow_no_value=True)
@@ -2024,7 +2033,7 @@ class EzroApp:
                     self.regionGroupTertiary.set(regionSettings["Other"]["Region Group"])
                     self.Config_Region_Choice_Name_Entry_Tertiary.configure(text=self.regionGroupTertiary)
         except:
-            showinfo("EzRO", "Invalid regions.ini file. Delete it and reload, then a new default file will be created.")
+            showerror("EzRO", "Invalid regions.ini file. Delete it and reload, then a new default file will be created.")
             sys.exit()
 
     ########
