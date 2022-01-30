@@ -33,7 +33,7 @@ import binascii
 from time import sleep
 from datetime import datetime
 
-tk.Tk().withdraw()
+# tk.Tk().withdraw()
 try:
     from SystemNames import *
 except:
@@ -1629,8 +1629,9 @@ class EzroApp:
             currSpecialFolders.append("BIOS")
         if "(Unl" in rom or "(Pirate" in rom:
             currSpecialFolders.append("Unlicensed")
-        if "(Test Program" in rom or "(SDK Build" in rom or "Production Test Program" in rom or "Enhancement Chip" in rom:
-            currSpecialFolders.append("Misc. Programs")
+        for keyword in ["(Test Program", "(SDK Build", "Production Test Program", "Enhancement Chip", "Test Cart"]:
+            if keyword in rom:
+                currSpecialFolders.append("Misc. Programs")
         if "(Proto" in rom:
             currSpecialFolders.append("Unreleased")
         # if "(Sample" in rom or "(Demo" in rom:
@@ -1981,7 +1982,7 @@ class EzroApp:
             "Undumped Japanese Download Station", "WiiWare Broadcast",
             "Disk Writer", "Collection of Mana", "Namco Museum Archives Vol 1",
             "Namco Museum Archives Vol 2", "Castlevania Anniversary Collection",
-            "Nintendo Switch", "NP", "Genesis Mini", "Mega Drive Mini"
+            "Nintendo Switch", "NP", "Genesis Mini", "Mega Drive Mini", "Classic Mini"
             ])
         defaultSettings["Keywords"]["General Attributes"] = "|".join([
             "Rev", "Beta", "Demo", "Sample", "Proto", "Alt", "Earlier",
