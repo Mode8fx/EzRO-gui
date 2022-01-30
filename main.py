@@ -774,7 +774,10 @@ class EzroApp:
                 if systemNameFromDAT is None or systemNameFromDAT == "":
                     failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
                 if systemNameFromDAT != currSystemName:
-                    failureMessage += currSystemName+":\nInvalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n\n"
+                    if systemNameFromDAT.startswith(currSystemName) and "(Parent-Clone)" in systemNameFromDAT: # the found DAT is *probably* correct (e.g N64 has "(BigEndian)" in the name, so this is needed)
+                        pass
+                    else:
+                        failureMessage += currSystemName+":\nDAT header mismatched; this is likely the incorrect DAT file.\nExpected: \""+currSystemName+" (Parent-Clone)\" (or something similar)\nGot: \""+systemNameFromDAT+"\".\n\n"
             if currSystemFolder == "":
                 failureMessage += currSystemName+":\nMissing input romset.\n\n"
             elif not path.isdir(currSystemFolder):
@@ -851,48 +854,65 @@ class EzroApp:
 
     def exportCheck(self, systemIndices):
         failureMessage = ""
+        warningMessage = ""
         for ind in systemIndices:
             currSystemName = self.exportSystemNames[ind]
 
             currSystemDAT = self.datFilePathChoices[ind].get()
             if currSystemDAT == "":
-                failureMessage += currSystemName+": Missing DAT file.\n"
+                failureMessage += currSystemName+":\nMissing DAT file.\n"
             elif not path.isfile(currSystemDAT):
-                failureMessage += currSystemName+": Invalid DAT file (file not found).\n"
+                failureMessage += currSystemName+":\nInvalid DAT file (file not found).\n"
             else:
                 try:
                     tree = ET.parse(currSystemDAT)
                     treeRoot = tree.getroot()
                     systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
                     if systemNameFromDAT is None or systemNameFromDAT == "":
-                        failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                        failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
                     if systemNameFromDAT != currSystemName:
-                        failureMessage += currSystemName+": Invalid DAT file (Is this the correct system? The DAT file's header name should be \""+currSystemName+" (Parent-Clone)\" without quotes).\n"
+                        if systemNameFromDAT.startswith(currSystemName) and "(Parent-Clone)" in systemNameFromDAT: # the found DAT is *probably* correct (e.g N64 has "(BigEndian)" in the name, so this is needed)
+                            pass
+                        else:
+                            failureMessage += currSystemName+":\nDAT header mismatched; this is likely the incorrect DAT file.\nExpected: \""+currSystemName+" (Parent-Clone)\" (or something similar)\nGot: \""+systemNameFromDAT+"\".\n\n"
                 except:
-                    failureMessage += currSystemName+": Invalid DAT file (Parent-Clone DAT is required).\n"
+                    failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
 
             currSystemFolder = self.romsetFolderPathChoices[ind].get()
             if currSystemFolder == "":
-                failureMessage += currSystemName+": Missing input romset.\n"
+                failureMessage += currSystemName+":\nMissing input romset.\n\n"
             elif not path.isdir(currSystemFolder):
-                failureMessage += currSystemName+": Invalid input romset (directory not found).\n"
+                failureMessage += currSystemName+":\nInvalid input romset (directory not found).\n\n"
 
             currOutputFolder = self.outputFolderDirectoryChoices[ind].get()
             if currOutputFolder == "":
-                failureMessage += currSystemName+": Missing output directory.\n"
+                failureMessage += currSystemName+":\nMissing output directory.\n\n"
             elif not path.isdir(currOutputFolder):
-                failureMessage += currSystemName+": Invalid output directory (directory not found).\n"
+                failureMessage += currSystemName+":\nInvalid output directory (directory not found).\n\n"
 
             if (not (currSystemFolder == "" or currOutputFolder == "")) and (currSystemFolder == currOutputFolder):
-                failureMessage += currSystemName+": Input and output directories are the same.\n"
+                failureMessage += currSystemName+":\nInput and output directories are the same.\n\n"
 
             currOutputType = self.outputTypeChoices[ind].get()
             if currOutputType == "Favorites":
                 currFavoritesList = self.romListFileChoices[ind].get()
                 if currFavoritesList == "":
-                    failureMessage += currSystemName+": Missing Favorites rom list.\n"
+                    failureMessage += currSystemName+":\nMissing Favorites rom list.\n\n"
                 elif not path.isfile(currFavoritesList):
-                    failureMessage += currSystemName+": Invalid Favorites rom list (file not found).\n"
+                    failureMessage += currSystemName+":\nInvalid Favorites rom list (file not found).\n\n"
+
+        for i in range(len(self.outputFolderDirectoryChoices)):
+            currOutputDir = self.outputFolderDirectoryChoices[i]
+            for j in range(i+1, len(self.outputFolderDirectoryChoices)):
+                otherOutputDir = self.outputFolderDirectoryChoices[j]
+                if currOutputDir == otherOutputDir:
+                    warningMessage += self.exportSystemNames[i]+" and "+self.exportSystemNames[j]+":\nThese two systems have the same output directory.\n\nYou may want to create a different directory for each system so their games don't get mixed up.\n\n"
+                    break
+            if warningMessage != "":
+                break
+
+        if warningMessage != "":
+            showinfo("Warning", warningMessage.strip())
 
         if failureMessage == "":
             return True
