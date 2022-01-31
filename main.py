@@ -770,10 +770,10 @@ class EzroApp:
             else:
                 tree = ET.parse(currSystemDAT)
                 treeRoot = tree.getroot()
-                systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
+                systemNameFromDAT = treeRoot.find("header").find("name").text
                 if systemNameFromDAT is None or systemNameFromDAT == "":
                     failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
-                if systemNameFromDAT != currSystemName:
+                if systemNameFromDAT != currSystemName+" (Parent-Clone)":
                     if systemNameFromDAT.startswith(currSystemName) and "(Parent-Clone)" in systemNameFromDAT: # the found DAT is *probably* correct (e.g N64 has "(BigEndian)" in the name, so this is needed)
                         pass
                     else:
@@ -867,10 +867,10 @@ class EzroApp:
                 try:
                     tree = ET.parse(currSystemDAT)
                     treeRoot = tree.getroot()
-                    systemNameFromDAT = treeRoot.find("header").find("name").text.split("(Parent-Clone)")[0].strip()
+                    systemNameFromDAT = treeRoot.find("header").find("name").text
                     if systemNameFromDAT is None or systemNameFromDAT == "":
                         failureMessage += currSystemName+":\nInvalid DAT file (Parent-Clone DAT is required).\n\n"
-                    if systemNameFromDAT != currSystemName:
+                    if systemNameFromDAT != currSystemName+" (Parent-Clone)":
                         if systemNameFromDAT.startswith(currSystemName) and "(Parent-Clone)" in systemNameFromDAT: # the found DAT is *probably* correct (e.g N64 has "(BigEndian)" in the name, so this is needed)
                             pass
                         else:
@@ -1247,6 +1247,7 @@ class EzroApp:
             export_regionTags[i] = export_regionTags[i].get()
 
         numCopiedBytesMain = 0
+        self.Export_MainProgress_Bar['value'] = 0
         for currIndex in systemIndices:
             currSystemName = self.exportSystemNames[currIndex]
             if self.isExport:
@@ -1301,6 +1302,7 @@ class EzroApp:
             self.checkSystemDATForClones()
             self.generateGameRomDict(currIndex)
             numCopiedBytesMain += self.copyMainRomset(currIndex)
+            self.Export_MainProgress_Bar['value'] += 1
         self.writeTextToSubProgress("====================\n\nTotal Export Size: "+simplifyNumBytes(numCopiedBytesMain)+"\n\n")
         self.writeTextToSubProgress("Review the log files for more information on what files "+("were" if self.isExport else "would be")+" transferred.\n")
         self.writeTextToSubProgress("Log files are not created for systems that "+("do" if self.isExport else "would")+" not receive any new files.\n\n")
