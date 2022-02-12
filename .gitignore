@@ -122,3 +122,4 @@ regions.ini
 settings.ini
 temp.py
 *.bat
+setup.py

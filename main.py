@@ -17,6 +17,7 @@ from pygubu.widgets.editabletreeview import EditableTreeview
 from pygubu.widgets.pathchooserinput import PathChooserInput
 from pygubu.widgets.scrolledframe import ScrolledFrame
 import pygubu.widgets.simpletooltip as tooltip
+import traceback
 
 from os import path, mkdir, listdir, remove, walk, rename, rmdir
 import re
@@ -33,15 +34,17 @@ import binascii
 from time import sleep
 from datetime import datetime
 
+progFolder = getCurrFolder()
+sys.path.append(progFolder)
+
 # tk.Tk().withdraw()
+noSystemNamesFileFlag = False
 try:
     from SystemNames import *
 except:
-    showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
+    noSystemNamesFileFlag = True
     from SystemNamesDefault import *
 
-progFolder = getCurrFolder()
-sys.path.append(progFolder)
 crcHasher = FileHash('crc32')
 
 defaultSettingsFile = path.join(progFolder, "settings.ini")
@@ -284,6 +287,8 @@ class EzroApp:
         self.Main_Notebook.bind('<<NotebookTabChanged>>', self.changeMainTab, add='')
         self.Main_Notebook.configure(height='675', width='1200')
         self.Main_Notebook.grid(column='0', row='0')
+        if noSystemNamesFileFlag:
+            showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
         # Tooltips
         tooltip.create(self.Export_ShowAdvancedSystems, 'Show systems that are difficult or uncommon to emulate, and systems that often do not make use of No-Intro DAT files.')
         tooltip.create(self.Export_TestExport, 'For testing; if enabled, roms will NOT be exported. This allows you to see how many roms would be exported and how much space they would take up without actually exporting anything.\n\nIf unsure, leave this disabled.')
@@ -2073,6 +2078,12 @@ class EzroApp:
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nGPL-3.0 License")
 
 
+
+def show_error(self, *args):
+    err = traceback.format_exception(*args)
+    showerror('Exception',err)
+
+tk.Tk.report_callback_exception = show_error
 
 if __name__ == '__main__':
     tk_root = tk.Tk()
