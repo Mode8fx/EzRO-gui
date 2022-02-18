@@ -271,10 +271,10 @@ class EzroApp:
         self.Config_Region_Template_Combobox = ttk.Combobox(self.Config_Region_Frame.innerframe)
         self.templateChoice = tk.StringVar(value='')
         self.Config_Region_Template_Combobox.configure(state='readonly', textvariable=self.templateChoice, values='"" "English" "English + Secondary" "English (USA Focus)" "English (Europe Focus)" "Japanese" "Japanese + Secondary"')
-        self.Config_Region_Template_Combobox.place(anchor='e', x='965', y='495')
+        self.Config_Region_Template_Combobox.place(anchor='e', x=int(965*screenHeightMult), y=int(495*screenHeightMult))
         self.Config_Region_Template_Apply = ttk.Button(self.Config_Region_Frame.innerframe)
         self.Config_Region_Template_Apply.configure(text='Apply Template')
-        self.Config_Region_Template_Apply.place(anchor='e', x='1070', y='495')
+        self.Config_Region_Template_Apply.place(anchor='e', x=int(1070*screenHeightMult), y=int(495*screenHeightMult))
         self.Config_Region_Template_Apply.configure(command=self.config_region_applyTemplate)
         self.Config_Region_Frame.configure(usemousewheel=True)
         self.Config_Region_Frame.pack(side='top')
@@ -285,7 +285,7 @@ class EzroApp:
         self.Config_Frame.pack(side='top')
         self.Main_Notebook.add(self.Config_Frame, text='Config')
         self.Main_Notebook.bind('<<NotebookTabChanged>>', self.changeMainTab, add='')
-        self.Main_Notebook.configure(height='675', width='1200')
+        self.Main_Notebook.configure(height=int(675*screenHeightMult), width=int(1200*screenHeightMult))
         self.Main_Notebook.grid(column='0', row='0')
         if noSystemNamesFileFlag:
             showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
@@ -827,7 +827,7 @@ class EzroApp:
         self.Audit_CancelButton.configure(command=self.audit_cancelAudit)
         self.Audit_Frame.configure(height='200', width='200')
         self.Audit_Frame.place(anchor='nw', relheight='1', relwidth='1', relx='0', rely='0', x='0', y='0')
-        self.Audit_Window.configure(height='600', width='800')
+        self.Audit_Window.configure(height=int(600*screenHeightMult), width=int(800*screenHeightMult))
         self.Audit_Window.grab_set()
         self.Audit_Window.protocol("WM_DELETE_WINDOW", self.audit_cancelAudit)
 
@@ -968,7 +968,7 @@ class EzroApp:
         self.Export_CancelButton.configure(command=self.export_cancelExport)
         self.Export_Frame.configure(height='200', width='200')
         self.Export_Frame.place(anchor='nw', relheight='1', relwidth='1', relx='0', rely='0', x='0', y='0')
-        self.Export_Window.configure(height='600', width='800')
+        self.Export_Window.configure(height=int(600*screenHeightMult), width=int(800*screenHeightMult))
         self.Export_Window.grab_set()
         self.Export_Window.protocol("WM_DELETE_WINDOW", self.export_cancelExport)
 
@@ -1920,42 +1920,85 @@ class EzroApp:
             self.createDefaultSettings()
         if not path.exists(regionsFile):
             self.createRegionSettings()
-        defaultSettings = configparser.ConfigParser(allow_no_value=True)
-        defaultSettings.optionxform = str
-        defaultSettings.read(defaultSettingsFile)
-        defaultSettings["General"] = {}
-        defaultSettings["General"]["Input No-Intro DAT Directory"] = self.g_datFilePath.get()
-        defaultSettings["General"]["Input Romset Directory"] = self.g_romsetFolderPath.get()
-        defaultSettings["Organization"] = {}
-        defaultSettings["Organization"]["Extract Compressed Roms"] = self.ssch(self.g_extractArchives)
-        defaultSettings["Organization"]["Create Game Folder for Each Game"] = self.ssch(self.g_parentFolder)
-        defaultSettings["Organization"]["Create Region Folders"] = self.ssch(self.g_sortByPrimaryRegion)
-        defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = self.ssch(self.g_primaryRegionInRoot)
-        defaultSettings["Organization"]["Create Folders for Special Categories"] = self.ssch(self.g_specialCategoryFolder)
-        defaultSettings["Organization"]["Overwrite Duplicate Files"] = self.ssch(self.g_overwriteDuplicates)
-        defaultSettings["Include"] = {}
-        defaultSettings["Include"]["Unlicensed"] = self.ssch(self.g_includeUnlicensed)
-        defaultSettings["Include"]["Unreleased"] = self.ssch(self.g_includeUnreleased)
-        defaultSettings["Include"]["Compilations"] = self.ssch(self.g_includeCompilations)
-        defaultSettings["Include"]["Misc. Programs"] = self.ssch(self.g_includeTestPrograms)
-        defaultSettings["Include"]["BIOS"] = self.ssch(self.g_includeBIOS)
-        defaultSettings["Include"]["(GBA) NES Ports"] = self.ssch(self.g_includeNESPorts)
-        defaultSettings["Include"]["(GBA) GBA Video"] = self.ssch(self.g_includeGBAVideo)
-        defaultSettings["Include"]["(1G1R) Games from Other Regions"] = self.ssch(self.g_includeOtherRegions)
-        with open(defaultSettingsFile, 'w') as mcf:
-            defaultSettings.write(mcf)
-        regionSettings = configparser.ConfigParser(allow_no_value=True)
-        regionSettings.optionxform = str
-        for i in range(self.regionNum):
-            regionSettings[str(i+1)] = {}
-            regionSettings[str(i+1)]["Region Group"] = self.regionGroupNames[i].get()
-            regionSettings[str(i+1)]["Priority Type"] = self.regionPriorityTypes[i].get()
-            regionSettings[str(i+1)]["Region/Language Tags"] = self.regionTags[i].get()
-        regionSettings["Other"] = {}
-        regionSettings["Other"]["Region Group"] = self.regionGroupTertiary.get()
-        regionSettings["Other"]["Priority Type"] = "Tertiary"
-        with open(regionsFile, 'w') as rf:
-            regionSettings.write(rf)
+
+        try:
+            defaultSettings = configparser.ConfigParser(allow_no_value=True)
+            defaultSettings.optionxform = str
+            defaultSettings.read(defaultSettingsFile)
+            defaultSettings["General"] = {}
+            defaultSettings["General"]["Input No-Intro DAT Directory"] = self.g_datFilePath.get()
+            defaultSettings["General"]["Input Romset Directory"] = self.g_romsetFolderPath.get()
+            defaultSettings["Organization"] = {}
+            defaultSettings["Organization"]["Extract Compressed Roms"] = self.ssch(self.g_extractArchives)
+            defaultSettings["Organization"]["Create Game Folder for Each Game"] = self.ssch(self.g_parentFolder)
+            defaultSettings["Organization"]["Create Region Folders"] = self.ssch(self.g_sortByPrimaryRegion)
+            defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = self.ssch(self.g_primaryRegionInRoot)
+            defaultSettings["Organization"]["Create Folders for Special Categories"] = self.ssch(self.g_specialCategoryFolder)
+            defaultSettings["Organization"]["Overwrite Duplicate Files"] = self.ssch(self.g_overwriteDuplicates)
+            defaultSettings["Include"] = {}
+            defaultSettings["Include"]["Unlicensed"] = self.ssch(self.g_includeUnlicensed)
+            defaultSettings["Include"]["Unreleased"] = self.ssch(self.g_includeUnreleased)
+            defaultSettings["Include"]["Compilations"] = self.ssch(self.g_includeCompilations)
+            defaultSettings["Include"]["Misc. Programs"] = self.ssch(self.g_includeTestPrograms)
+            defaultSettings["Include"]["BIOS"] = self.ssch(self.g_includeBIOS)
+            defaultSettings["Include"]["(GBA) NES Ports"] = self.ssch(self.g_includeNESPorts)
+            defaultSettings["Include"]["(GBA) GBA Video"] = self.ssch(self.g_includeGBAVideo)
+            defaultSettings["Include"]["(1G1R) Games from Other Regions"] = self.ssch(self.g_includeOtherRegions)
+            with open(defaultSettingsFile, 'w') as mcf:
+                defaultSettings.write(mcf)
+            savedDefaultSettings = True
+        except:
+            savedDefaultSettings = False
+
+        regionFailureReasons = ""
+        try:
+            for i in range(self.regionNum):
+                if self.regionGroupNames[i].get().strip() == "":
+                    regionFailureReasons += "Region group "+str(i+1)+" has no name.\n"
+                elif self.regionGroupNames[i].get().strip() != slugify(self.regionGroupNames[i].get().strip()):
+                    regionFailureReasons += "Region group "+str(i+1)+" has an invalid name.\n"
+                else:
+                    for j in range(i+1, self.regionNum):
+                        if self.regionGroupNames[i].get().strip() == self.regionGroupNames[j].get().strip():
+                            regionFailureReasons += "Region groups "+str(i+1)+" and "+str(j+1)+" have the same name.\n"
+                tagsAreInvalid = True
+                for tag in commaSplit(self.regionTags[i].get()):
+                    if tag != "":
+                        tagsAreInvalid = False
+                        break
+                if tagsAreInvalid:
+                    regionFailureReasons += "Region group "+str(i+1)+" has invalid tag(s).\n"
+            if self.regionGroupTertiary.get().strip() == "":
+                regionFailureReasons += "Tertiary region group has no name.\n"
+            if self.regionGroupTertiary.get().strip() != slugify(self.regionGroupTertiary.get().strip()):
+                regionFailureReasons += "Tertiary region group has an invalid name.\n"
+            regionFailureReasons = regionFailureReasons.strip()
+            if regionFailureReasons != "":
+                raise Exception("Invalid region group settings.")
+            regionSettings = configparser.ConfigParser(allow_no_value=True)
+            regionSettings.optionxform = str
+            for i in range(self.regionNum):
+                regionSettings[str(i+1)] = {}
+                regionSettings[str(i+1)]["Region Group"] = self.regionGroupNames[i].get().strip()
+                regionSettings[str(i+1)]["Priority Type"] = self.regionPriorityTypes[i].get()
+                regionSettings[str(i+1)]["Region/Language Tags"] = self.regionTags[i].get().strip()
+            regionSettings["Other"] = {}
+            regionSettings["Other"]["Region Group"] = self.regionGroupTertiary.get().strip()
+            regionSettings["Other"]["Priority Type"] = "Tertiary"
+            with open(regionsFile, 'w') as rf:
+                regionSettings.write(rf)
+            savedRegionSettings = True
+        except:
+            savedRegionSettings = False
+
+        if savedDefaultSettings and savedRegionSettings:
+            showinfo("EzRO", "Successfully saved all settings.")
+        elif savedDefaultSettings and (not savedRegionSettings):
+            showerror("EzRO", "An error has occurred: Failed to save region settings.\n\nReasons:\n"+regionFailureReasons)
+        elif (not savedDefaultSettings) and savedRegionSettings:
+            showerror("EzRO", "An error has occurred: Failed to save default settings.")
+        else:
+            showerror("EzRO", "An error has occurred: Failed to save default settings and region settings.\n\nReasons:\n"+regionFailureReasons)
 
     def ssch(self, val): # settings_saveChangesHelper
         if val.get():
@@ -2009,7 +2052,8 @@ class EzroApp:
             "Undumped Japanese Download Station", "WiiWare Broadcast",
             "Disk Writer", "Collection of Mana", "Namco Museum Archives Vol 1",
             "Namco Museum Archives Vol 2", "Castlevania Anniversary Collection",
-            "Nintendo Switch", "NP", "Genesis Mini", "Mega Drive Mini", "Classic Mini"
+            "Sega Smash Pack", "Steam Version", "Nintendo Switch", "NP",
+            "Genesis Mini", "Mega Drive Mini", "Classic Mini"
             ])
         defaultSettings["Keywords"]["General Attributes"] = "|".join([
             "Rev", "Beta", "Demo", "Sample", "Proto", "Alt", "Earlier",
@@ -2089,6 +2133,9 @@ if __name__ == '__main__':
     tk_root = tk.Tk()
     tk_root.resizable(False, False)
     tk_root.title("EzRO")
+    # screenHeight = tk_root.winfo_screenheight()
+    # screenHeightMult = screenHeight / 1440.0
+    screenHeightMult = 1
     app = EzroApp(tk_root)
     app.run()
 
