@@ -836,14 +836,14 @@ class EzroApp:
         self.updateAndAuditVerifiedRomsets(self.systemIndexList)
 
     def audit_cancelAudit(self):
-        # Cancelling an audit early causes an error in tkinter (writing to a progressbar/text field/etc. that no longer exists) but it doesn't actually affect anything
         if self.auditInProgress:
             if askyesno("EzRO Audit", "Cancel the audit?"):
-                self.auditInProgress = False
-                self.Audit_Window.destroy()
+                # self.auditInProgress = False
+                # self.Audit_Window.destroy()
+                self.cancelledAudit = True
         else:
-            self.auditInProgress = False
             self.Audit_Window.destroy()
+            # self.cancelledAudit = True
 
     def export_exportSystem(self):
         if self.exportTabNum > 0:
@@ -980,11 +980,12 @@ class EzroApp:
         # Cancelling an export early causes an error in tkinter (writing to a progressbar/text field/etc. that no longer exists) but it doesn't actually affect anything
         if self.exportInProgress:
             if askyesno("EzRO Export", "Cancel the export?"):
-                self.exportInProgress = False
-                self.Export_Window.destroy()
+                # self.exportInProgress = False
+                # self.Export_Window.destroy()
+                self.cancelledExport = True
         else:
-            self.exportInProgress = False
             self.Export_Window.destroy()
+            # self.cancelledExport = True
 
     def export_toggleTestExport(self):
         self.isExport = not self.isTestExport.get()
@@ -1008,6 +1009,7 @@ class EzroApp:
         global allGameNamesInDAT, romsWithoutCRCMatch, progressBar
 
         self.auditInProgress = True
+        self.cancelledAudit = False
         self.Audit_MainProgress_Label.configure(text='Auditing...')
         self.Audit_MainProgress_Bar['value'] = 0
         isFirstSystem = True
@@ -1060,6 +1062,10 @@ class EzroApp:
                         foundMatch = self.renamingProcess(root, file, isNoIntro, headerLength, crcToGameName, allGameNames)
                         self.Audit_SubProgress_Bar['value'] += 1
                         tk_root.update() # a full update() (as opposed to update_idletasks()) allows us to check if the Cancel button was clicked, allowing a safe early exit
+                    if self.cancelledAudit:
+                        break
+                if self.cancelledAudit:
+                    break
             xmlRomsInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == True]
             xmlRomsNotInSet = [key for key in allGameNamesInDAT.keys() if allGameNamesInDAT[key] == False]
             self.createSystemAuditLog(xmlRomsInSet, xmlRomsNotInSet, romsWithoutCRCMatch, currSystemName)
@@ -1230,6 +1236,8 @@ class EzroApp:
             if not askyesno("EzRO Export", "If you haven't done so already, it is recommended that you update/audit your romsets whenever you export (or if this is your first time running EzRO). This will make sure your rom names match those in the No-Intro DAT files.\n\nContinue with export?"):
                 return
 
+        self.exportInProgress = True
+        self.cancelledExport = False
         export_regionGroupNames = self.regionGroupNames + [self.regionGroupTertiary]
         for i in range(len(export_regionGroupNames)):
             export_regionGroupNames[i] = export_regionGroupNames[i].get()
@@ -1575,7 +1583,6 @@ class EzroApp:
         self.Export_SubProgress_Bar['value'] = 0
         for game in gameRomDict.keys():
             self.Export_SubProgress_Bar['value'] += 1
-            tk_root.update()
             bestRom, bestRegion, bestRegionType = self.getBestRom(gameRomDict[game])
             bestRegionIsPrimary = (bestRegionType == "Primary")
             currSpecialFolders = self.getSpecialFolders(bestRom)
@@ -1599,6 +1606,9 @@ class EzroApp:
                         favoritesList[path.splitext(rom)[0]] = True
             elif romsetCategory == "1G1R" or bestRegionIsPrimary:
                 self.copyRomToTarget(bestRom)
+            tk_root.update()
+            if self.cancelledExport:
+                break
         missingFavorites = []
         if self.isExport:
             self.writeTextToSubProgress("Copied "+str(len(self.romsCopied))+" new files.\n")
