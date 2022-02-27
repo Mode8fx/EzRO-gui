@@ -1462,9 +1462,19 @@ class EzroApp:
         return bestRom, bestRegion, bestRegionType
 
     def getScore(self, rom):
+        # We already know that this is only called for roms that are in the best region
         attributes = self.getAttributeSplit(rom)[1:]
         score = 100
         lastVersion = 0
+
+        primaryRegionTags = []
+        for i in range(len(export_regionGroupNames)):
+            if export_regionPriorityTypes[i] == "Primary":
+                primaryRegionTags += self.commaSplit(export_regionTags[i])
+        while "" in primaryRegionTags:
+            primaryRegionTags.remove("") # probably not needed, but just in case
+        containsPrimaryLanguage = False
+        containsOtherLanguage = False
         for att in attributes:
             if att.startswith("Rev") or att.startswith("Reprint"):
                 try:
@@ -1504,8 +1514,15 @@ class EzroApp:
                 score -= 10
             elif att in ["Unl", "Pirate"]:
                 score -= 20
+            elif att in ["En", "Ca", "Ja", "Fr", "De", "Es", "It", "No", "Br", "Sw", "Cn", "Zh", "Ko", "As", "Ne", "Ru", "Da", "Nl", "Pt", "Sv", "No", "Da", "Fi", "Pl"]:
+                if att in primaryRegionTags:
+                    containsPrimaryLanguage = True
+                else:
+                    containsOtherLanguage = True
             elif not (att in self.g_specificAttributes or any(att.startswith(starter) for starter in self.g_generalAttributes)): # a tiebreaker for any new keywords that are later added
                 score -= 1
+        if (not containsPrimaryLanguage) and containsOtherLanguage:
+            score -= 2
         return score
 
     def fixDuplicateName(self, firstGameRoms, secondGameRoms, sharedName):
