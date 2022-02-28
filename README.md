@@ -4,6 +4,8 @@ EzRO is a GUI-based rom organizer that allows you to export your local romsets i
  
 By providing a [No-Intro](https://datomatic.no-intro.org/) DAT file for each system, you can take a local romset (full or partial) and export a curated copy; you can convert a full set into 1G1R for your region, group different releases of a single game together into one folder, automatically unzip roms for emulators that don’t support zipped roms, and more.
 
+<img src="https://github.com/Mips96/EzRO-gui/blob/main/screenshots/screenshot%201.png" />
+
 ## Features
 
 - Export Full, 1G1R, or Favorites sets for each system
