@@ -271,10 +271,10 @@ class EzroApp:
         self.Config_Region_Template_Combobox = ttk.Combobox(self.Config_Region_Frame.innerframe)
         self.templateChoice = tk.StringVar(value='')
         self.Config_Region_Template_Combobox.configure(state='readonly', textvariable=self.templateChoice, values='"" "English" "English + Secondary" "English (USA Focus)" "English (Europe Focus)" "Japanese" "Japanese + Secondary"')
-        self.Config_Region_Template_Combobox.place(anchor='e', x=int(965*screenHeightMult), y=int(495*screenHeightMult))
+        self.Config_Region_Template_Combobox.place(anchor='e', x=int(960*screenHeightMult), y=int(470*screenHeightMult))
         self.Config_Region_Template_Apply = ttk.Button(self.Config_Region_Frame.innerframe)
         self.Config_Region_Template_Apply.configure(text='Apply Template')
-        self.Config_Region_Template_Apply.place(anchor='e', x=int(1070*screenHeightMult), y=int(495*screenHeightMult))
+        self.Config_Region_Template_Apply.place(anchor='e', x=int(1065*screenHeightMult), y=int(470*screenHeightMult))
         self.Config_Region_Template_Apply.configure(command=self.config_region_applyTemplate)
         self.Config_Region_Frame.configure(usemousewheel=True)
         self.Config_Region_Frame.pack(side='top')
@@ -2147,7 +2147,7 @@ class EzroApp:
         showinfo("About", "EzRO Rom Organizer v1.00\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
 
     def menu_viewExternalLibraries(self):
-        showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nGPL-3.0 License")
+        showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")
 
 
 
