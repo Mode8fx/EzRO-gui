@@ -123,3 +123,5 @@ settings.ini
 temp.py
 *.bat
 setup.py
+release/
+*.ico

@@ -1,7 +1,7 @@
 # Each array includes alternate names for each system.
 # You can add your own systems and/or alternate names.
 # If the first value is "Advanced", then it will only show up when "Show Advanced Systems" is enabled.
-# Capitalization doesn't matter, and each names is already checked with and without " - " where applicable (for example, "Nokia - N-Gage" covers both "Nokia - N-Gage" and "Nokia N-Gage")
+# Capitalization doesn't matter, and each name is already checked with and without " - " where applicable (for example, "Nokia - N-Gage" covers both "Nokia - N-Gage" and "Nokia N-Gage")
 
 systemNamesDict = {
 	"Acorn - Archimedes"                                           : ("Advanced",     ["Archimedes"]),
