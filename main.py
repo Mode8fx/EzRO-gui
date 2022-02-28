@@ -285,8 +285,9 @@ class EzroApp:
         self.Config_Frame.pack(side='top')
         self.Main_Notebook.add(self.Config_Frame, text='Config')
         self.Main_Notebook.bind('<<NotebookTabChanged>>', self.changeMainTab, add='')
-        self.Main_Notebook.configure(height=int(675*screenHeightMult), width=int(1200*screenHeightMult))
+        # self.Main_Notebook.configure(height=int(675*screenHeightMult), width=int(1200*screenHeightMult))
         self.Main_Notebook.grid(column='0', row='0')
+        self.Main_Notebook.place(relheight='1', relwidth='1')
         if noSystemNamesFileFlag:
             showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
         # Tooltips
@@ -2158,10 +2159,11 @@ tk.Tk.report_callback_exception = show_error
 
 if __name__ == '__main__':
     tk_root = tk.Tk()
-    tk_root.resizable(False, False)
-    tk_root.title("EzRO")
     # screenHeight = tk_root.winfo_screenheight()
     # screenHeightMult = screenHeight / 1440.0
+    tk_root.geometry('1200x675')
+    # tk_root.resizable(False, False)
+    tk_root.title("EzRO")
     screenHeightMult = 1
     app = EzroApp(tk_root)
     app.run()
