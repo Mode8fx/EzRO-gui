@@ -64,7 +64,7 @@ C:/Roms/Sega Genesis/My Game 4 (China).zip
 ```
 ... provided you have a DAT file for the system:
 ```
-C:/Rom Organizer 3/No-Intro Database/Sega Genesis.dat
+C:/No-Intro Database/Sega Genesis.dat
 ```
 ... can be copied and sorted as:
 ```
