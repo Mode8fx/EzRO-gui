@@ -2,7 +2,7 @@
 
 EzRO is a GUI-based rom organizer that allows you to export your local romsets in an organized manner, using a variety of options and settings.
  
-By providing a [No-Intro](https://datomatic.no-intro.org/) DAT file for each system, you can take a local romset (full or partial) and export a curated copy; you can convert a full set into 1G1R for your region, group different releases of a single game together into one folder, automatically unzip roms for emulators that don’t support zipped roms, and more.
+By providing a [No-Intro](https://datomatic.no-intro.org/) Parent-Clone DAT file for each system, you can take a local romset (full or partial) and export a curated copy; you can convert a full set into 1G1R for your region, group different releases of a single game together into one folder, automatically unzip roms for emulators that don’t support zipped roms, and more.
 
 <img src="https://github.com/Mips96/EzRO-gui/blob/main/screenshots/screenshot%201.png" />
 
@@ -42,6 +42,8 @@ Yes. These are included in `settings.ini`, and you can add your own:
 - `General Attributes`: These are similar to Specific Attributes, but they cover any attribute that starts with these keywords (e.g. "Rev" covers "Rev 1", "Rev 2", "Rev A", etc.)
 ### Can I add my own systems to the list? Can I add new nicknames to existing systems?
 Yes, you can do both of these by editing `SystemNames.py` (just follow the format that's already in the file).
+### What DAT files should I use?
+This program was designed for use with No-Intro's Parent-Clone DAT files. These can be found on No-Intro's DAT-o-MATIC, specifically the [Daily Downloads](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) page. Scroll down, select `P/C XML` in the dropdown, then click Prepare, then Download.
 ### Are disc-based systems supported?
 For the most part, no. Since there are many different methods of compressing (or not compressing) games from these systems, and because Redump DAT files are structured differently than No-Intro (and frankly, they contain less information), they are not supported at this time. This could change in the future, but don't count on it.
 ### Are arcade-based systems supported?
