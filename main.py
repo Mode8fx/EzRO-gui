@@ -572,6 +572,17 @@ class EzroApp:
             if path.isfile(currSystemDAT):
                 self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
                 return True
+        for df in listdir(self.g_datFilePath.get()):
+            try:
+                currSystemDAT = path.join(self.g_datFilePath.get(), df).replace("\\", "/")
+                fileName, fileExt = path.splitext(df)
+                assert fileExt == ".dat"
+                fileTimestamp = df.replace(name, "").strip()
+                assert datetime.strptime(df, name+" (%Y%m%d-%H%M%S).dat") is not None
+                self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
+                return True
+            except:
+                pass
         return False
 
     def setInputRomsetDir(self, systemName, romsetFolderPath):
@@ -1990,7 +2001,7 @@ class EzroApp:
                         if self.regionGroupNames[i].get().strip() == self.regionGroupNames[j].get().strip():
                             regionFailureReasons += "Region groups "+str(i+1)+" and "+str(j+1)+" have the same name.\n"
                 tagsAreInvalid = True
-                for tag in commaSplit(self.regionTags[i].get()):
+                for tag in self.commaSplit(self.regionTags[i].get()):
                     if tag != "":
                         tagsAreInvalid = False
                         break
@@ -2144,7 +2155,7 @@ class EzroApp:
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
 
     def menu_viewAbout(self):
-        showinfo("About", "EzRO Rom Organizer v1.00\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
+        showinfo("About", "EzRO Rom Organizer v1.01\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
 
     def menu_viewExternalLibraries(self):
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")
