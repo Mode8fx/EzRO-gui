@@ -1,0 +1,52 @@
+##############
+# PARAMETERS #
+##############
+
+name:	This is what the category will be named in EzRO. It is also the name of
+		the folder that roms from this category will be exported to if
+		'Create Folders for Special Categories' is enabled*.
+		If necessary, special characters (such as colons) will automatically
+		be removed from folder names, so you don't have to worry about
+		working around those.
+
+keywords:	Any roms with one of these keywords (these can also be phrases
+			containing spaces) are considered to be part of this category.
+
+description:	Optional; This is the description that appears when you move
+				your mouse over the category. If you don't want a description,
+				simply don't include this.
+
+exclusiveSystems:	Optional; This is an array of systems where this category
+					will appear. If you do not include this, the category will
+					appear for all systems.
+
+* If a rom is in multiple categories, the topmost category will take priority
+while lower categories will be subfolders.
+
+############
+# EXAMPLES #
+############
+
+Add something like these to customCategories.
+Don't forget the comma at the end of each name/description/keywords line!
+
+	Category(
+		name = "Super Game Boy",
+		description = "Roms with '(SGB Enhanced)' in the file name will be included. If 'Create Folders for Special Categories' is enabled, they will be put in a folder called 'Super Game Boy'.",
+		keywords = ["(SGB Enhanced)"],
+		exclusiveSystems = ["Nintendo - Game Boy"],
+	)
+
+	Category(
+		name = "Capcom Classics",
+		description = "Any rom with one of these phrases in the file name will be included. If 'Create Folders for Special Categories' is enabled, they will be put in a folder called 'Capcom Classics'.",
+		keywords = ["Mega Man", "Ghosts'n Goblins", "DuckTales"],
+		exclusiveSystems = None,
+	)
+
+	Category(
+		name = "Folder Name",
+		description = None,
+		keywords = [],
+		exclusiveSystems = None,
+	)
