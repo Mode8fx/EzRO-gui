@@ -295,7 +295,8 @@ class EzroApp:
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_IncludeOtherRegions, '(Only applies to 1G1R export.)\n\nIf enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         for i in range(len(SpecialCategories)):
-            tooltip.create(self.Config_Default_IncludeSpecial[i], SpecialCategories[i].description)
+            if SpecialCategories[i].description is not None:
+                tooltip.create(self.Config_Default_IncludeSpecial[i], SpecialCategories[i].description)
         tooltip.create(self.Config_Region_Choice_Name_Label_Tertiary, 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
         tooltip.create(self.Config_Region_Choice_Type_Label_Tertiary, 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Non-Primary Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
         # Main widget
@@ -438,17 +439,19 @@ class EzroApp:
         self.Export_FromList_PathChooser_[self.exportTabNum].configure(mustexist='true', state='normal', textvariable=self.romListFileChoices[self.exportTabNum], type='file', filetypes=[('Text Files', '*.txt')])
         self.Export_FromList_PathChooser_[self.exportTabNum].grid(column='0', ipadx='90', padx='150', pady='10', row='5', sticky='w')
         self.Export_IncludeFrame_.append(ttk.Labelframe(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
-        self.Export_IncludeSpecial_ = []
-        self.includeSpecialChoices = []
+        numSkipped = 0
         for i in range(len(SpecialCategories)):
             self.Export_IncludeSpecial_.append([])
             self.includeSpecialChoices.append([])
             self.Export_IncludeSpecial_[i].append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
             self.includeSpecialChoices[i].append(tk.IntVar(value=includeSpecial[i]))
             self.Export_IncludeSpecial_[i][self.exportTabNum].configure(text=SpecialCategories[i].name, variable=self.includeSpecialChoices[i][self.exportTabNum])
-            currCol = i%3
-            currRow = i//3
-            self.Export_IncludeSpecial_[i][self.exportTabNum].grid(column=currCol, padx=10, pady=10, row=currRow, sticky='w')
+            if SpecialCategories[i].exclusiveSystems is not None and systemName not in SpecialCategories[i].exclusiveSystems:
+                numSkipped += 1
+            else:
+                currCol = (i+numSkipped)%3
+                currRow = (i+numSkipped)//3
+                self.Export_IncludeSpecial_[i][self.exportTabNum].grid(column=currCol, padx=10, pady=10, row=currRow, sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum].configure(text='Include')
         self.Export_IncludeFrame_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='6', sticky='w')
         self.Export_ExtractArchives_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -1225,7 +1228,7 @@ class EzroApp:
             ignoredFolders = []
             for i in range(len(SpecialCategories)):
                 includeSpecial[i] = self.includeSpecialChoices[i][currIndex].get()
-                if not includeSpecial[i]:
+                if (not includeSpecial[i]) and ((SpecialCategories[i].exclusiveSystems is None) or (currSystemName in SpecialCategories[i].exclusiveSystems)):
                     ignoredFolders.append(SpecialCategories[i].name)
             extractArchives = self.extractArchivesChoices[currIndex].get()
             exportToGameParentFolder = self.parentFolderChoices[currIndex].get()
