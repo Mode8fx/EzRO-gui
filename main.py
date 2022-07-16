@@ -444,13 +444,16 @@ class EzroApp:
             self.Export_IncludeSpecial_.append([])
             self.includeSpecialChoices.append([])
             self.Export_IncludeSpecial_[i].append(ttk.Checkbutton(self.Export_IncludeFrame_[self.exportTabNum]))
-            self.includeSpecialChoices[i].append(tk.IntVar(value=includeSpecial[i]))
+            if len(includeSpecial) > i:
+                self.includeSpecialChoices[i].append(tk.IntVar(value=includeSpecial[i]))
+            else:
+                self.includeSpecialChoices[i].append(tk.IntVar(value=False))
             self.Export_IncludeSpecial_[i][self.exportTabNum].configure(text=SpecialCategories[i].name, variable=self.includeSpecialChoices[i][self.exportTabNum])
             if SpecialCategories[i].exclusiveSystems is not None and systemName not in SpecialCategories[i].exclusiveSystems:
                 numSkipped += 1
             else:
-                currCol = (i+numSkipped)%3
-                currRow = (i+numSkipped)//3
+                currCol = (i-numSkipped)%3
+                currRow = (i-numSkipped)//3
                 self.Export_IncludeSpecial_[i][self.exportTabNum].grid(column=currCol, padx=10, pady=10, row=currRow, sticky='w')
         self.Export_IncludeFrame_[self.exportTabNum].configure(text='Include')
         self.Export_IncludeFrame_[self.exportTabNum].grid(column='0', padx='20', pady='10', row='6', sticky='w')
@@ -589,7 +592,8 @@ class EzroApp:
                 loadout[self.exportSystemNames[i]]["Include Games from Non-Primary Regions"] = str(self.includeOtherRegionsChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Rom List"] = self.romListFileChoices[i].get()
                 for j in range(len(SpecialCategories)):
-                    loadout[self.exportSystemNames[i]]["Include "+SpecialCategories[j].name] = str(self.includeSpecialChoices[j][i].get())
+                    if (SpecialCategories[j].exclusiveSystems is None) or (self.exportSystemNames[i] in SpecialCategories[j].exclusiveSystems):
+                        loadout[self.exportSystemNames[i]]["Include "+SpecialCategories[j].name] = str(self.includeSpecialChoices[j][i].get())
                 loadout[self.exportSystemNames[i]]["Extract Compressed Roms"] = str(self.extractArchivesChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Create Game Folder for Each Game"] = str(self.parentFolderChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Create Region Folders"] = str(self.sortByPrimaryRegionChoices[i].get())
@@ -598,6 +602,9 @@ class EzroApp:
                 loadout[self.exportSystemNames[i]]["Overwrite Duplicate Files"] = str(self.overwriteDuplicatesChoices[i].get())
             with open(loadoutFile, 'w') as lf:
                 loadout.write(lf)
+
+    def keyValIsTrue(self, k, v):
+        return k.get(v) == "True"
 
     def export_loadSystemLoadout(self):
         if self.exportTabNum > 0:
@@ -614,9 +621,10 @@ class EzroApp:
         loadout.read(loadoutFile)
         for key in loadout.keys():
             if key in systemNamesDict.keys():
+                curr_includeSpecial = [loadout[key].get("Include "+cat.name) == "1" for cat in SpecialCategories]
                 self.addSystemTab(systemName=key, datFilePath=loadout[key]["Input No-Intro DAT"], romsetFolderPath=loadout[key]["Input Romset"], outputFolderDirectory=loadout[key]["Output Directory"],
                     outputType=loadout[key]["Output Type"], includeOtherRegions=loadout[key]["Include Games from Non-Primary Regions"], romList=loadout[key]["Rom List"],
-                    includeSpecial=loadout[key], extractArchives=loadout[key]["Extract Compressed Roms"], parentFolder=loadout[key]["Create Game Folder for Each Game"],
+                    includeSpecial=curr_includeSpecial, extractArchives=loadout[key]["Extract Compressed Roms"], parentFolder=loadout[key]["Create Game Folder for Each Game"],
                     sortByPrimaryRegion=loadout[key]["Create Region Folders"], primaryRegionInRoot=loadout[key]["Do Not Create Folder for Primary Region"],
                     specialCategoryFolder=loadout[key]["Create Folders for Special Categories"], overwriteDuplicates=loadout[key]["Overwrite Duplicate Files"])
 
@@ -1179,9 +1187,9 @@ class EzroApp:
 
     def mainExport(self, systemIndices):
         global currSystemName, currSystemSourceFolder, currSystemTargetFolder, currSystemDAT, romsetCategory
-        global extractArchives, exportToGameParentFolder, sortByPrimaryRegion, primaryRegionInRoot, specialCategoryFolder, overwriteDuplicates
-        global ignoredFolders, primaryRegions, favoritesList, includeSpecial
-        global export_regionGroupNames, export_regionPriorityTypes, export_regionTags
+        global includeOtherRegions, extractArchives, exportToGameParentFolder, sortByPrimaryRegion, primaryRegionInRoot
+        global specialCategoryFolder, overwriteDuplicates, ignoredFolders, primaryRegions, favoritesList
+        global includeSpecial, export_regionGroupNames, export_regionPriorityTypes, export_regionTags
 
         if not self.recentlyVerified:
             if not askyesno("EzRO Export", "If you haven't done so already, it is recommended that you update/audit your romsets whenever you export (or if this is your first time running EzRO). This will make sure your rom names match those in the No-Intro DAT files.\n\nContinue with export?"):
@@ -1226,8 +1234,9 @@ class EzroApp:
             favoritesFile = self.romListFileChoices[currIndex].get()
             includeOtherRegions = self.includeOtherRegionsChoices[currIndex].get()
             ignoredFolders = []
+            includeSpecial = []
             for i in range(len(SpecialCategories)):
-                includeSpecial[i] = self.includeSpecialChoices[i][currIndex].get()
+                includeSpecial.append(self.includeSpecialChoices[i][currIndex].get())
                 if (not includeSpecial[i]) and ((SpecialCategories[i].exclusiveSystems is None) or (currSystemName in SpecialCategories[i].exclusiveSystems)):
                     ignoredFolders.append(SpecialCategories[i].name)
             extractArchives = self.extractArchivesChoices[currIndex].get()
@@ -1614,10 +1623,11 @@ class EzroApp:
     def getSpecialFolders(self, rom):
         currSpecialFolders = []
         for category in SpecialCategories:
-            for keyword in category.keywords:
-                if keyword in rom:
-                    currSpecialFolders.append(category.name)
-                    break
+            if category.exclusiveSystems is None or (currSystemName in category.exclusiveSystems):
+                for keyword in category.keywords:
+                    if keyword in rom:
+                        currSpecialFolders.append(category.name)
+                        break
         return currSpecialFolders
 
     def createMainCopiedLog(self, currIndex, logType="Export"):
@@ -1994,7 +2004,10 @@ class EzroApp:
             self.g_specialCategoryFolder.set(defaultSettings["Organization"]["Create Folders for Special Categories"] == "True")
             self.g_overwriteDuplicates.set(defaultSettings["Organization"]["Overwrite Duplicate Files"] == "True")
             for i in range(len(SpecialCategories)):
-                self.g_includeSpecial[i].set(defaultSettings["Include"][SpecialCategories[i].name] == "True")
+                try:
+                    self.g_includeSpecial[i].set(defaultSettings["Include"][SpecialCategories[i].name] == "True")
+                except:
+                    self.g_includeSpecial[i].set(False)
             self.g_includeOtherRegions.set(defaultSettings["Include"]["(1G1R) Games from Other Regions"] == "True")
         except:
             showerror("EzRO", "Invalid settings.ini file. Delete it and reload, then a new default file will be created.")

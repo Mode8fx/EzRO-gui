@@ -20,6 +20,8 @@ class Category:
 			self.keywords = [self.keywords]
 		self.description = description
 		self.exclusiveSystems = exclusiveSystems
+		if not (self.exclusiveSystems is None or isinstance(self.exclusiveSystems, list) or isinstance(self.exclusiveSystems, tuple)):
+			self.exclusiveSystems = [self.exclusiveSystems]
 		self.folderName = slugify(name)
 
 
@@ -109,7 +111,7 @@ SpecialCategories = [
 
 	Category(
 		name = "GBA Video",
-		description = None,
+		description = "(Only applies to GBA.)",
 		keywords = [
 			"Game Boy Advance Video"
 		],

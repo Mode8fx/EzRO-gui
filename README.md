@@ -42,6 +42,8 @@ Yes. These are included in `settings.ini`, and you can add your own:
 - `General Attributes`: These are similar to Specific Attributes, but they cover any attribute that starts with these keywords (e.g. "Rev" covers "Rev 1", "Rev 2", "Rev A", etc.)
 ### Can I add my own systems to the list? Can I add new nicknames to existing systems?
 Yes, you can do both of these by editing `SystemNames.py` (just follow the format that's already in the file).
+### Can I add my own special categories in addition to the existing ones like Unlicensed and Unreleased?
+Yes. The categories are included in `SpecialCategories.py`, and you can edit them or add your own.
 ### What DAT files should I use?
 This program was designed for use with No-Intro's Parent-Clone DAT files. These can be found on No-Intro's DAT-o-MATIC, specifically the [Daily Downloads](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) page. Scroll down, select `P/C XML` in the dropdown, then click Prepare, then Download.
 ### Are disc-based systems supported?
