@@ -120,6 +120,13 @@ SpecialCategories = [
 
 ]
 
+# Edit the prefix and suffix for special categories and region folders.
+# By default, a folder name will be surrounded with brackets. e.g. "[Unreleased]"
+# If you changed these to "! " and " !" respectively, it would become "! Unreleased !"
+# The prefix cannot contain leading spaces, and the suffix cannot contain trailing spaces.
+specialFolderPrefix = "["
+specialFolderSuffix = "]"
+
 # Specific Attributes are special keywords used when determining the best version
 # of a game for 1G1R.
 # They are used to denote re-releases that should be considered secondary to

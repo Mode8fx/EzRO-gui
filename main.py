@@ -51,6 +51,10 @@ try:
 except:
     noSpecialCategoriesFileFlag = True
     from SpecialCategoriesDefault import *
+badSpecialFolderPrefixFlag = (specialFolderPrefix != slugify(specialFolderPrefix, stripValue=False).lstrip())
+specialFolderPrefix = slugify(specialFolderPrefix, stripValue=False).lstrip()
+badSpecialFolderSuffixFlag = (specialFolderSuffix != slugify(specialFolderSuffix, stripValue=False).rstrip())
+specialFolderSuffix = slugify(specialFolderSuffix, stripValue=False).rstrip()
 specialCategoriesGeneral = [sc for sc in SpecialCategories if sc.exclusiveSystems is None]
 specialCategoriesExclusive = [sc for sc in SpecialCategories if sc.exclusiveSystems is not None]
 
@@ -282,6 +286,10 @@ class EzroApp:
             showerror("EzRO", "Valid SystemNames.py file not found. Using default system list.")
         if noSpecialCategoriesFileFlag:
             showerror("EzRO", "Valid SpecialCategories.py file not found. Using default categories list.")
+        if badSpecialFolderPrefixFlag:
+            showerror("EzRO", "Warning: Invalid special folder prefix. Please change it in SpecialCategories.py.\n\nFor now, prefix has temporarily been changed to \""+specialFolderPrefix+"\".")
+        if badSpecialFolderSuffixFlag:
+            showerror("EzRO", "Warning: Invalid special folder suffix. Please change it in SpecialCategories.py.\n\nFor now, suffix has temporarily been changed to \""+specialFolderSuffix+"\".")
         # Tooltips
         tooltip.create(self.Export_ShowAdvancedSystems, 'Show systems that are difficult or uncommon to emulate, and systems that often do not make use of No-Intro DAT files.')
         tooltip.create(self.Export_TestExport, 'For testing; if enabled, roms will NOT be exported. This allows you to see how many roms would be exported and how much space they would take up without actually exporting anything.\n\nIf unsure, leave this disabled.')
@@ -501,9 +509,9 @@ class EzroApp:
                 tooltip.create(self.Export_IncludeSpecial_[i][self.exportTabNum], SpecialCategories[i].description)
         tooltip.create(self.Export_ExtractArchives_[self.exportTabNum], 'If enabled, any roms from your input romset that are contained in zipped archives (ZIP, 7z, etc.) will be extracted during export.\n\nUseful if your output device does not support zipped roms.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
-        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"'+specialFolderPrefix+'Europe'+specialFolderSuffix+'\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_SpecialCategoryFolder_[self.exportTabNum], 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
-        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a '+specialFolderPrefix+'Europe'+specialFolderSuffix+' folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
 
 
@@ -1013,12 +1021,12 @@ class EzroApp:
             numFiles = 0
             for root, dirs, files in walk(currSystemFolder):
                 for file in files:
-                    if path.basename(root) != "[Unverified]":
+                    if path.basename(root) != specialFolderPrefix+"Unverified"+specialFolderSuffix:
                         numFiles += 1
             self.Audit_SubProgress_Bar.configure(maximum=str(numFiles))
             for root, dirs, files in walk(currSystemFolder):
                 for file in files:
-                    if path.basename(root) != "[Unverified]":
+                    if path.basename(root) != specialFolderPrefix+"Unverified"+specialFolderSuffix:
                         foundMatch = self.renamingProcess(root, file, isNoIntro, headerLength, crcToGameName, allGameNames)
                         self.Audit_SubProgress_Bar['value'] += 1
                         tk_root.update() # a full update() (as opposed to update_idletasks()) allows us to check if the Cancel button was clicked, allowing a safe early exit
@@ -1356,8 +1364,8 @@ class EzroApp:
 
     def getAttributeSplit(self, name):
         mna = [s.strip() for s in re.split('\(|\)|\[|\]', path.splitext(name)[0]) if s.strip() != ""]
-        if name.startswith("[BIOS]") and len(mna) > 1:
-            mna[:2] = ["[BIOS] "+mna[1]]
+        if name.startswith(specialFolderPrefix+"BIOS"+specialFolderSuffix) and len(mna) > 1:
+            mna[:2] = [specialFolderPrefix+"BIOS"+specialFolderSuffix+" "+mna[1]]
         mergeNameArray = []
         mergeNameArray.append(mna[0])
         if len(mna) > 1:
@@ -1551,10 +1559,10 @@ class EzroApp:
             # Start building output path according to attributes
             currGameFolder = currSystemTargetFolder
             if sortByPrimaryRegion and (not (bestRegionIsPrimary and primaryRegionInRoot)):
-                currGameFolder = path.join(currGameFolder, "["+bestRegion+"]")
+                currGameFolder = path.join(currGameFolder, specialFolderPrefix+bestRegion+specialFolderSuffix)
             if specialCategoryFolder:
                 for folder in currSpecialFolders:
-                    currGameFolder = path.join(currGameFolder, "["+folder+"]")
+                    currGameFolder = path.join(currGameFolder, specialFolderPrefix+folder+specialFolderSuffix)
             if exportToGameParentFolder:
                 currGameFolder = path.join(currGameFolder, game)
             if romsetCategory in ["All", "Favorites"]:
@@ -1720,7 +1728,7 @@ class EzroApp:
         self.regionTags[self.regionNum] = tk.StringVar(value=groupTags)
         self.Config_Region_Choice_Tags_Entry_[self.regionNum].configure(textvariable=self.regionTags[self.regionNum], width='45')
         self.Config_Region_Choice_Tags_Entry_[self.regionNum].grid(column='0', padx='720', pady='10', row=self.regionNum, sticky='w')
-        tooltip.create(self.Config_Region_Choice_Name_Label_[self.regionNum], 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. [World], [USA], etc).')
+        tooltip.create(self.Config_Region_Choice_Name_Label_[self.regionNum], 'The name of the region group. If \"Create Region Folders\" is enabled, then games marked as one of this group\'s region tags will be exported to a folder named after this group, surround by brackets (e.g. '+specialFolderPrefix+'World'+specialFolderSuffix+', '+specialFolderPrefix+'USA'+specialFolderSuffix+', etc).')
         tooltip.create(self.Config_Region_Choice_Type_Label_[self.regionNum], 'The type of region group.\n\nPrimary: The most significant region; 1G1R exports will prioritize this. If there are multiple Primary groups, then higher groups take priority.\n\nSecondary: \"Backup\" regions that will not be used in a 1G1R export unless no Primary-group version of a game exists, and \"Include Games from Non-Primary Regions\" is also enabled. If there are multiple Secondary groups, then higher groups take priority.\n\nTertiary: Any known region/language tag that is not part of a Primary/Secondary group is added to the Tertiary group by default. This is functionally the same as a Secondary group.')
         tooltip.create(self.Config_Region_Choice_Tags_Label_[self.regionNum], 'Rom tags that signify that a rom belongs to this group (region tags like USA and Europe, language tags like En and Fr, etc). If a rom contains tags from multiple region groups, then the higher group will take priority.')
 
@@ -2037,7 +2045,7 @@ class EzroApp:
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
 
     def menu_viewAbout(self):
-        showinfo("About", "EzRO Rom Organizer v1.1\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
+        showinfo("About", "EzRO Rom Organizer v1.11\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
 
     def menu_viewExternalLibraries(self):
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")

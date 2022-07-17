@@ -898,6 +898,8 @@ def simplifyNumBytes(numBytes, decimalPlaces=2):
 	----------
 	value : str
 		The original file name.
+	stripValue : bool
+		If True, the value will also be stripped of any whitespace.
 
 	Returns
 	-------
@@ -911,7 +913,7 @@ def simplifyNumBytes(numBytes, decimalPlaces=2):
 	Output
 		"What_ Yes... [THIS] is - a file name!.png"
 """
-def slugify(value):
+def slugify(value, stripValue=True):
 	value = unicodedata.normalize('NFKD', value)
 	value = re.sub(':\s', ' - ', value)
 	value = re.sub(':', '-', value)
@@ -921,7 +923,9 @@ def slugify(value):
 	value = re.sub('[\\/\*|]', '-', value)
 	value = re.sub('[?]', '_', value)
 	value = re.sub('[\s]+', ' ', value)
-	return value.strip()
+	if stripValue:
+		value = value.strip()
+	return value
 
 """
 	From https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring#Python
