@@ -34,6 +34,8 @@ import binascii
 from time import sleep
 from datetime import datetime
 
+versionNum = 1.12
+
 progFolder = getCurrFolder()
 sys.path.append(progFolder)
 
@@ -1120,7 +1122,7 @@ class EzroApp:
                         i = 1
                         while True:
                             duplicateName = dnStart+str(i)+")"
-                            duplicatePath = path.join(root, duplicateName)
+                            duplicatePath = path.join(root, duplicateName+currFileExt)
                             if not path.exists(duplicatePath):
                                 break
                             i += 1
@@ -2045,7 +2047,7 @@ class EzroApp:
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
 
     def menu_viewAbout(self):
-        showinfo("About", "EzRO Rom Organizer v1.11\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
+        showinfo("About", "EzRO Rom Organizer v"+str(versionNum)+"\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
 
     def menu_viewExternalLibraries(self):
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")
