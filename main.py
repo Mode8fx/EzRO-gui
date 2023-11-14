@@ -26,6 +26,7 @@ import zipfile
 import rarfile
 rarfile.UNRAR_TOOL = "tools/UnRAR.exe"
 import py7zr
+import patoolib
 import shutil
 from pathlib import Path as plpath
 from math import ceil
@@ -1089,18 +1090,6 @@ class EzroApp:
             fileBytes = list(zippedFilesDict.values())[0].read()
             return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
 
-    def getCRCFromArchive(self, filePath, fileExt, headerLength=0):
-        if fileExt == ".zip":
-            with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
-                return self.getCRC_ZIP_RAR(zippedFile, headerLength)
-        elif fileExt == ".rar":
-            with rarfile.RarFile(filePath) as zippedFile:
-                return self.getCRC_ZIP_RAR(zippedFile, headerLength)
-        elif fileExt == ".7z":
-            with py7zr.SevenZipFile(filePath, 'r') as zippedFile:
-                return self.getCRC_7Z(zippedFile, headerLength)
-        return False
-
     def getCRC_File(self, filePath, headerLength=0):
         if headerLength == 0:
             return crcHasher.hash_file(filePath)
@@ -1110,8 +1099,15 @@ class EzroApp:
 
     def getCRC(self, filePath, headerLength=0):
         fileExt = path.splitext(filePath)[1]
-        if fileExt in archiveTypes:
-            fileCRC = self.getCRCFromArchive(filePath, fileExt, headerLength)
+        if fileExt == ".zip":
+            with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                fileCRC = self.getCRC_ZIP_RAR(zippedFile, headerLength)
+        elif fileExt == ".rar":
+            with rarfile.RarFile(filePath, 'r') as zippedFile:
+                fileCRC = self.getCRC_ZIP_RAR(zippedFile, headerLength)
+        elif fileExt == ".7z":
+            with py7zr.SevenZipFile(filePath, 'r') as zippedFile:
+                fileCRC = self.getCRC_7Z(zippedFile, headerLength)
         else:
             fileCRC = self.getCRC_File(filePath, headerLength)
         if fileCRC is False:
@@ -1172,8 +1168,8 @@ class EzroApp:
             romsWithoutCRCMatch.append(file)
 
     def renameGame(self, filePath, newName, fileExt):
-        if zipfile.is_zipfile(filePath):
-            self.renameArchiveAndContent(filePath, newName)
+        if fileExt in archiveTypes:
+            self.renameArchiveAndContent(filePath, fileExt, newName)
         else:
             rename(filePath, path.join(path.dirname(filePath), newName+fileExt))
             self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(filePath))[0]+" to "+newName+"\n\n")
@@ -1205,22 +1201,34 @@ class EzroApp:
                 auditLogFile.writelines(rom+"\n")
         auditLogFile.close()
 
-    def renameArchiveAndContent(self, archivePath, newName):
-        with zipfile.ZipFile(archivePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+    def renameArchiveAndContent_ZIP_RAR_7Z(self, zippedFile, archivePath, archiveExt, newName):
+        if archiveExt in [".zip", ".rar"]:
             zippedFiles = zippedFile.namelist()
-            if len(zippedFiles) > 1:
-                self.writeTextToSubProgress("Archive contains more than one file. Skipping.\n")
-                return
-            fileExt = path.splitext(zippedFiles[0])[1]
-            archiveExt = path.splitext(archivePath)[1]
-            zippedFile.extract(zippedFiles[0], path.dirname(archivePath))
-            currExtractedFilePath = path.join(path.dirname(archivePath), zippedFiles[0])
-            newArchivePath = path.join(path.dirname(archivePath), newName+archiveExt)
-            newExtractedFilePath = path.splitext(newArchivePath)[0]+fileExt
-            rename(currExtractedFilePath, newExtractedFilePath)
+        else:
+            zippedFiles = zippedFile.getnames()
+        if len(zippedFiles) > 1:
+            self.writeTextToSubProgress("Archive contains more than one file. Skipping.\n")
+            return
+        fileExt = path.splitext(zippedFiles[0])[1]
+        patoolib.extract_archive(archivePath, outdir=path.dirname(archivePath))
+        currExtractedFilePath = path.join(path.dirname(archivePath), zippedFiles[0])
+        newArchivePath = path.join(path.dirname(archivePath), newName+archiveExt)
+        newExtractedFilePath = path.splitext(newArchivePath)[0]+fileExt
+        rename(currExtractedFilePath, newExtractedFilePath)
+        return fileExt, newArchivePath, newExtractedFilePath
+
+    def renameArchiveAndContent(self, archivePath, archiveExt, newName):
+        if archiveExt == ".zip":
+            with zipfile.ZipFile(archivePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                fileExt, newArchivePath, newExtractedFilePath = self.renameArchiveAndContent_ZIP_RAR_7Z(zippedFile, archivePath, archiveExt, newName)
+        elif archiveExt == ".rar":
+            with rarfile.RarFile(archivePath, 'r') as zippedFile:
+                fileExt, newArchivePath, newExtractedFilePath = self.renameArchiveAndContent_ZIP_RAR_7Z(zippedFile, archivePath, archiveExt, newName)
+        elif archiveExt == ".7z":
+            with py7zr.SevenZipFile(archivePath, 'r') as zippedFile:
+                fileExt, newArchivePath, newExtractedFilePath = self.renameArchiveAndContent_ZIP_RAR_7Z(zippedFile, archivePath, archiveExt, newName)
+        patoolib.create_archive(newName+archiveExt, [newExtractedFilePath])
         remove(archivePath)
-        with zipfile.ZipFile(newArchivePath, 'w', zipfile.ZIP_DEFLATED) as newZip:
-            newZip.write(newExtractedFilePath, arcname=newName+fileExt)
         remove(newExtractedFilePath)
         self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName+"\n\n")
 
