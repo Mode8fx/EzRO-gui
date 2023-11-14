@@ -23,6 +23,9 @@ from os import path, mkdir, listdir, remove, walk, rename, rmdir
 import re
 import xml.etree.ElementTree as ET
 import zipfile
+import rarfile
+rarfile.UNRAR_TOOL = "tools/UnRAR.exe"
+import py7zr
 import shutil
 from pathlib import Path as plpath
 from math import ceil
@@ -1063,27 +1066,55 @@ class EzroApp:
         self.audit_cancelButtonText.set("Finish")
         self.auditInProgress = False
 
-    def getCRC(self, filePath, headerLength=0):
-        if zipfile.is_zipfile(filePath):
+    def getCRCFromArchive(self, filePath, headerLength=0):
+        fileExt = path.splitext(filePath)[1]
+
+        if fileExt == ".zip":
             with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
                 if len(zippedFile.namelist()) > 1:
                     return False
                 if headerLength == 0:
                     fileInfo = zippedFile.infolist()[0]
-                    fileCRC = format(fileInfo.CRC & 0xFFFFFFFF, '08x')
-                    return fileCRC.zfill(8).upper()
+                    return format(fileInfo.CRC, '08x')
                 else:
                     fileBytes = zippedFile.read(zippedFile.namelist()[0])
-                    headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
-                    return headerlessCRC.zfill(8).upper()
-        else:
+                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+        elif fileExt == ".rar":
+            with rarfile.RarFile(filePath) as zippedFile:
+                if len(zippedFile.namelist()) > 1:
+                    return False
+                if headerLength == 0:
+                    fileInfo = zippedFile.infolist()[0]
+                    return format(fileInfo.CRC, '08x')
+                else:
+                    fileBytes = zippedFile.read(zippedFile.namelist()[0])
+                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+        elif fileExt == ".7z":
+            with py7zr.SevenZipFile(filePath, 'r') as zippedFile:
+                if len(zippedFile.getnames()) > 1:
+                    return False
+                if headerLength == 0:
+                    fileInfo = zippedFile.list()[0]
+                    return format(fileInfo.crc32, '08x')
+                else:
+                    zippedFilesDict = zippedFile.read(zippedFile.getnames()[0])
+                    fileBytes = list(zippedFilesDict.values())[0].read()
+                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+        return None
+
+    def getCRC(self, filePath, headerLength=0):
+        fileCRC = self.getCRCFromArchive(filePath, headerLength)
+        if fileCRC is False:
+            return False
+        elif fileCRC is None:
             if headerLength == 0:
                 fileCRC = crcHasher.hash_file(filePath)
                 return fileCRC.zfill(8).upper()
             with open(filePath, "rb") as unheaderedFile:
                 fileBytes = unheaderedFile.read()
                 headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
-                return headerlessCRC.zfill(8).upper()
+                fileCRC = headerlessCRC
+        return fileCRC.zfill(8).upper()
 
     def renamingProcess(self, root, file, isNoIntro, headerLength, crcToGameName, allGameNames):
         global allGameNamesInDAT, romsWithoutCRCMatch
