@@ -39,6 +39,8 @@ from datetime import datetime
 
 versionNum = 1.12
 
+archiveTypes = [".zip", ".rar", ".7z"]
+
 progFolder = getCurrFolder()
 sys.path.append(progFolder)
 
@@ -1066,54 +1068,54 @@ class EzroApp:
         self.audit_cancelButtonText.set("Finish")
         self.auditInProgress = False
 
-    def getCRCFromArchive(self, filePath, headerLength=0):
-        fileExt = path.splitext(filePath)[1]
+    def getCRC_ZIP_RAR(self, zippedFile, headerLength=0):
+        if len(zippedFile.namelist()) > 1:
+            return False
+        if headerLength == 0:
+            fileInfo = zippedFile.infolist()[0]
+            return format(fileInfo.CRC, '08x')
+        else:
+            fileBytes = zippedFile.read(zippedFile.namelist()[0])
+            return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
 
+    def getCRC_7Z(self, zippedFile, headerLength=0):
+        if len(zippedFile.getnames()) > 1:
+            return False
+        if headerLength == 0:
+            fileInfo = zippedFile.list()[0]
+            return format(fileInfo.crc32, '08x')
+        else:
+            zippedFilesDict = zippedFile.read(zippedFile.getnames()[0])
+            fileBytes = list(zippedFilesDict.values())[0].read()
+            return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+
+    def getCRCFromArchive(self, filePath, fileExt, headerLength=0):
         if fileExt == ".zip":
             with zipfile.ZipFile(filePath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
-                if len(zippedFile.namelist()) > 1:
-                    return False
-                if headerLength == 0:
-                    fileInfo = zippedFile.infolist()[0]
-                    return format(fileInfo.CRC, '08x')
-                else:
-                    fileBytes = zippedFile.read(zippedFile.namelist()[0])
-                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+                return self.getCRC_ZIP_RAR(zippedFile, headerLength)
         elif fileExt == ".rar":
             with rarfile.RarFile(filePath) as zippedFile:
-                if len(zippedFile.namelist()) > 1:
-                    return False
-                if headerLength == 0:
-                    fileInfo = zippedFile.infolist()[0]
-                    return format(fileInfo.CRC, '08x')
-                else:
-                    fileBytes = zippedFile.read(zippedFile.namelist()[0])
-                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
+                return self.getCRC_ZIP_RAR(zippedFile, headerLength)
         elif fileExt == ".7z":
             with py7zr.SevenZipFile(filePath, 'r') as zippedFile:
-                if len(zippedFile.getnames()) > 1:
-                    return False
-                if headerLength == 0:
-                    fileInfo = zippedFile.list()[0]
-                    return format(fileInfo.crc32, '08x')
-                else:
-                    zippedFilesDict = zippedFile.read(zippedFile.getnames()[0])
-                    fileBytes = list(zippedFilesDict.values())[0].read()
-                    return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
-        return None
+                return self.getCRC_7Z(zippedFile, headerLength)
+        return False
+
+    def getCRC_File(self, filePath, headerLength=0):
+        if headerLength == 0:
+            return crcHasher.hash_file(filePath)
+        with open(filePath, "rb") as unheaderedFile:
+            fileBytes = unheaderedFile.read()
+            return str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
 
     def getCRC(self, filePath, headerLength=0):
-        fileCRC = self.getCRCFromArchive(filePath, headerLength)
+        fileExt = path.splitext(filePath)[1]
+        if fileExt in archiveTypes:
+            fileCRC = self.getCRCFromArchive(filePath, fileExt, headerLength)
+        else:
+            fileCRC = self.getCRC_File(filePath, headerLength)
         if fileCRC is False:
             return False
-        elif fileCRC is None:
-            if headerLength == 0:
-                fileCRC = crcHasher.hash_file(filePath)
-                return fileCRC.zfill(8).upper()
-            with open(filePath, "rb") as unheaderedFile:
-                fileBytes = unheaderedFile.read()
-                headerlessCRC = str(hex(binascii.crc32(fileBytes[headerLength:])))[2:]
-                fileCRC = headerlessCRC
         return fileCRC.zfill(8).upper()
 
     def renamingProcess(self, root, file, isNoIntro, headerLength, crcToGameName, allGameNames):
