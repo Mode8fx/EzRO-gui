@@ -1,0 +1,16 @@
+Brotli==1.1.0
+filehash==0.2.dev1
+inflate64==1.0.0
+multivolumefile==0.2.3
+patool==2.0.0
+psutil==5.9.6
+py7zr==0.20.8
+pybcj==1.0.2
+pycryptodomex==3.19.0
+pygubu==0.31
+pyppmd==1.1.0
+python-dateutil==2.8.2
+pyzstd==0.15.9
+rarfile==4.1
+six==1.16.0
+texttable==1.7.0
