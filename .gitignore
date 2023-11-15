@@ -121,8 +121,6 @@ Favorites Lists/
 regions.ini
 settings.ini
 temp.py
-*.bat
 setup.py
 release/
-*.ico
 testing_grounds/
