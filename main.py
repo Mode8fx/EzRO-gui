@@ -38,7 +38,7 @@ import binascii
 from time import sleep
 from datetime import datetime
 
-versionNum = 1.12
+versionNum = 1.2
 
 archiveTypes = [".zip", ".rar", ".7z"]
 
@@ -1644,11 +1644,23 @@ class EzroApp:
         if overwriteDuplicates or (not self.targetExists(sourceRomPath, targetRomPath)):
             try:
                 createdFolder = self.isExport and createDir(currGameFolder)
-                if zipfile.is_zipfile(sourceRomPath) and extractArchives:
-                    with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
-                        if self.isExport:
-                            zippedFile.extract(zippedFile.namelist()[0], path.dirname(targetRomPath))
-                        self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
+                fileExt = path.splitext(sourceRomPath)[1]
+                if extractArchives and (fileExt in archiveTypes):
+                    if fileExt == ".zip":
+                        with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                            if self.isExport:
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
+                            self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
+                    elif fileExt == ".rar":
+                        with rarfile.RarFile(sourceRomPath, 'r') as zippedFile:
+                            if self.isExport:
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
+                            self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
+                    elif fileExt == ".7z":
+                        with py7zr.SevenZipFile(sourceRomPath, 'r') as zippedFile:
+                            if self.isExport:
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
+                            self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
                 else:
                     if self.isExport:
                         shutil.copy(sourceRomPath, targetRomPath)
@@ -1665,10 +1677,18 @@ class EzroApp:
             self.numRomsSkipped += 1
 
     def targetExists(self, sourceRomPath, targetRomPath):
-        if not (extractArchives and zipfile.is_zipfile(sourceRomPath)):
+        fileExt = path.splitext(sourceRomPath)[1]
+        if not (extractArchives and (fileExt in archiveTypes)):
             return path.isfile(targetRomPath)
-        with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
-            tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
+        elif fileExt == ".zip":
+            with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
+                tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
+        elif fileExt == ".rar":
+            with rarfile.RarFile(sourceRomPath, 'r') as zippedFile:
+                tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
+        elif fileExt == ".7z":
+            with py7zr.SevenZipFile(sourceRomPath, 'r') as zippedFile:
+                tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
         return path.isfile(tempTargetRomPath)
 
     def getSpecialFolders(self, rom):
