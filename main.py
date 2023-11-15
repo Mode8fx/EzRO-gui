@@ -239,10 +239,14 @@ class EzroApp:
         self.g_specialCategoryFolder = tk.IntVar(value=False)
         self.Config_Default_SpecialCategoryFolder.configure(text='Create Folders for Special Categories', variable=self.g_specialCategoryFolder)
         self.Config_Default_SpecialCategoryFolder.place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
+        self.Config_Default_LetterFolder = ttk.Checkbutton(self.Config_Default_Frame)
+        self.g_letterFolder = tk.IntVar(value=False)
+        self.Config_Default_LetterFolder.configure(text='Create Letter Folders', variable=self.g_letterFolder)
+        self.Config_Default_LetterFolder.place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
         self.Config_Default_OverwriteDuplicates = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_overwriteDuplicates = tk.IntVar(value=False)
         self.Config_Default_OverwriteDuplicates.configure(text='Overwrite Duplicate Files', variable=self.g_overwriteDuplicates)
-        self.Config_Default_OverwriteDuplicates.place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
+        self.Config_Default_OverwriteDuplicates.place(anchor='nw', relx='.651', rely='.642', x='0', y='0')
         self.Config_Default_Frame.configure(height='200', width='200')
         self.Config_Default_Frame.pack(side='top')
         self.Config_Notebook.add(self.Config_Default_Frame, text='Default Settings')
@@ -310,6 +314,7 @@ class EzroApp:
         tooltip.create(self.Config_Default_SortByPrimaryRegion, 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"[Europe]\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_PrimaryRegionInRoot, '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a [Europe] folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Config_Default_SpecialCategoryFolder, 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Config_Default_LetterFolder, 'If enabled, all roms will be exported to a parent folder named after the first letter of the game\'s highest-priority region.\n\nFor example, Castlevania will be exported to a [C] folder.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_OverwriteDuplicates, 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Config_Default_IncludeOtherRegions, '(Only applies to 1G1R export.)\n\nIf enabled: In the event that a game does not contain a rom from your region (e.g. your primary region is USA but the game is a Japan-only release), a secondary region will be used according to your Region/Language Priority Order.\n\nIf disabled: In the event that a game does not contain a rom from your region, the game is skipped entirely.\n\nIf you only want to export roms from your own region, disable this.')
         for i in range(len(SpecialCategories)):
@@ -371,7 +376,9 @@ class EzroApp:
         self.Export_SortByPrimaryRegion_ = []
         self.sortByPrimaryRegionChoices = []
         self.Export_SpecialCategoryFolder_ = []
+        self.Export_LetterFolder_ = []
         self.specialCategoryFolderChoices = []
+        self.letterFolderChoices = []
         self.Export_PrimaryRegionInRoot_ = []
         self.primaryRegionInRootChoices = []
         self.Export_OverwriteDuplicates_ = []
@@ -400,8 +407,9 @@ class EzroApp:
         self.Export_System_Combobox.configure(values=systemListStr)
 
     def addSystemTab(self, systemName="New System", datFilePath="", romsetFolderPath="", outputFolderDirectory="",
-            outputType="All", includeOtherRegions=False, romList="", includeSpecial=[], extractArchives=False, parentFolder=False,
-            sortByPrimaryRegion=False, primaryRegionInRoot=False, specialCategoryFolder=False, overwriteDuplicates=False):
+            outputType="All", includeOtherRegions=False, romList="", includeSpecial=[], extractArchives=False,
+            parentFolder=False, sortByPrimaryRegion=False, primaryRegionInRoot=False, specialCategoryFolder=False,
+            letterFolder=False, overwriteDuplicates=False):
         self.exportSystemNames.append(systemName)
         self.Export_ScrolledFrame_.append(ScrolledFrame(self.Export_Systems, scrolltype='both'))
         self.Export_DAT_Label_.append(ttk.Label(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
@@ -496,10 +504,14 @@ class EzroApp:
         self.specialCategoryFolderChoices.append(tk.IntVar(value=specialCategoryFolder))
         self.Export_SpecialCategoryFolder_[self.exportTabNum].configure(text='Create Folders for Special Categories', variable=self.specialCategoryFolderChoices[self.exportTabNum])
         self.Export_SpecialCategoryFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.438', x='0', y='0')
+        self.Export_LetterFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
+        self.letterFolderChoices.append(tk.IntVar(value=letterFolder))
+        self.Export_LetterFolder_[self.exportTabNum].configure(text='Create Letter Folders', variable=self.letterFolderChoices[self.exportTabNum])
+        self.Export_LetterFolder_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
         self.Export_OverwriteDuplicates_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.overwriteDuplicatesChoices.append(tk.IntVar(value=overwriteDuplicates))
         self.Export_OverwriteDuplicates_[self.exportTabNum].configure(text='Overwrite Duplicate Files', variable=self.overwriteDuplicatesChoices[self.exportTabNum])
-        self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.540', x='0', y='0')
+        self.Export_OverwriteDuplicates_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.642', x='0', y='0')
         self.Export_RemoveSystem_.append(ttk.Button(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.Export_RemoveSystem_[self.exportTabNum].configure(text='Remove System')
         self.Export_RemoveSystem_[self.exportTabNum].place(anchor='se', relx='1', rely='1', x='-10', y='-10')
@@ -521,6 +533,7 @@ class EzroApp:
         tooltip.create(self.Export_ParentFolder_[self.exportTabNum], 'If enabled, roms will be exported to a parent folder with the same name as the primary region release of your rom.\n\nFor example, \"Legend of Zelda, The (USA)\" and \"Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)\" will both be exported to a folder titled \"Legend of Zelda, The\".\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_SortByPrimaryRegion_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the game\'s highest-priority region.\n\nFor example, Devil World (NES) has Europe and Japan releases, but not USA. If your order of region priority is USA->Europe->Japan, then all versions of Devil World (and its parent folder, if enabled) will be exported to a folder titled \"'+specialFolderPrefix+'Europe'+specialFolderSuffix+'\".\n\nIf you enable this, it is strongly recommended that you also enable \"Create Game Folder for Each Game\".\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_SpecialCategoryFolder_[self.exportTabNum], 'If enabled, all exported roms that are part of a special category (Unlicensed, Unreleased, etc.) will be exported to a parent folder named after that category. There will be multiple nested folders if a game belongs to multiple special categories.\n\nIf unsure, leave this enabled.')
+        tooltip.create(self.Export_LetterFolder_[self.exportTabNum], 'If enabled, all roms will be exported to a parent folder named after the first letter of the game\'s highest-priority region.\n\nFor example, Castlevania will be exported to a [C] folder.\n\nIf unsure, leave this disabled.')
         tooltip.create(self.Export_PrimaryRegionInRoot_[self.exportTabNum], '(Only applies if \"Create Region Folders\" is enabled.)\n\nIf enabled, a region folder will NOT be created for your highest-priority region.\n\nFor example, if your order of region priority is USA->Europe->Japan, then games that have USA releases will not be exported to a [USA] folder (they will instead be placed directly in the output folder), but games that have Europe releases and not USA releases will be exported to a '+specialFolderPrefix+'Europe'+specialFolderSuffix+' folder.\n\nIf unsure, leave this enabled.')
         tooltip.create(self.Export_OverwriteDuplicates_[self.exportTabNum], 'If enabled: If a rom in the output directory with the same name as an exported rom already exists, it will be overwritten by the new export.\n\nIf disabled: The export will not overwrite matching roms in the output directory.\n\nIf unsure, leave this disabled.')
 
@@ -617,6 +630,7 @@ class EzroApp:
                 loadout[self.exportSystemNames[i]]["Create Region Folders"] = str(self.sortByPrimaryRegionChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Do Not Create Folder for Primary Region"] = str(self.primaryRegionInRootChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Create Folders for Special Categories"] = str(self.specialCategoryFolderChoices[i].get())
+                loadout[self.exportSystemNames[i]]["Create Letter Folders"] = str(self.letterFolderChoices[i].get())
                 loadout[self.exportSystemNames[i]]["Overwrite Duplicate Files"] = str(self.overwriteDuplicatesChoices[i].get())
             with open(loadoutFile, 'w') as lf:
                 loadout.write(lf)
@@ -644,7 +658,7 @@ class EzroApp:
                     outputType=loadout[key]["Output Type"], includeOtherRegions=loadout[key]["Include Games from Non-Primary Regions"], romList=loadout[key]["Rom List"],
                     includeSpecial=curr_includeSpecial, extractArchives=loadout[key]["Extract Compressed Roms"], parentFolder=loadout[key]["Create Game Folder for Each Game"],
                     sortByPrimaryRegion=loadout[key]["Create Region Folders"], primaryRegionInRoot=loadout[key]["Do Not Create Folder for Primary Region"],
-                    specialCategoryFolder=loadout[key]["Create Folders for Special Categories"], overwriteDuplicates=loadout[key]["Overwrite Duplicate Files"])
+                    specialCategoryFolder=loadout[key]["Create Folders for Special Categories"], letterFolder=loadout[key]["Create Letter Folders"], overwriteDuplicates=loadout[key]["Overwrite Duplicate Files"])
 
     def export_addSystem(self):
         currSystemChoice = self.systemChoice.get()
@@ -656,7 +670,7 @@ class EzroApp:
                 outputType="All", includeOtherRegions=self.g_includeOtherRegions.get(), romList="",
                 includeSpecial=[self.g_includeSpecial[i].get() for i in range(len(self.g_includeSpecial))], extractArchives=False, parentFolder=self.g_parentFolder.get(),
                 sortByPrimaryRegion=self.g_sortByPrimaryRegion.get(), primaryRegionInRoot=self.g_primaryRegionInRoot.get(),
-                specialCategoryFolder=self.g_specialCategoryFolder.get(), overwriteDuplicates=self.g_overwriteDuplicates.get())
+                specialCategoryFolder=self.g_specialCategoryFolder.get(), letterFolder=self.g_letterFolder.get(), overwriteDuplicates=self.g_overwriteDuplicates.get())
 
     def export_setOutputType(self, event=None):
         currIndex = self.Export_Systems.index("current")
@@ -717,7 +731,9 @@ class EzroApp:
         self.Export_PrimaryRegionInRoot_.pop(currSystemIndex)
         self.primaryRegionInRootChoices.pop(currSystemIndex)
         self.Export_SpecialCategoryFolder_.pop(currSystemIndex)
+        self.Export_LetterFolder_.pop(currSystemIndex)
         self.specialCategoryFolderChoices.pop(currSystemIndex)
+        self.letterFolderChoices.pop(currSystemIndex)
         self.Export_OverwriteDuplicates_.pop(currSystemIndex)
         self.overwriteDuplicatesChoices.pop(currSystemIndex)
         self.Export_RemoveSystem_.pop(currSystemIndex)
@@ -1241,7 +1257,7 @@ class EzroApp:
     def mainExport(self, systemIndices):
         global currSystemName, currSystemSourceFolder, currSystemTargetFolder, currSystemDAT, romsetCategory
         global includeOtherRegions, extractArchives, exportToGameParentFolder, sortByPrimaryRegion, primaryRegionInRoot
-        global specialCategoryFolder, overwriteDuplicates, ignoredFolders, primaryRegions, favoritesList
+        global specialCategoryFolder, letterFolder, overwriteDuplicates, ignoredFolders, primaryRegions, favoritesList
         global includeSpecial, export_regionGroupNames, export_regionPriorityTypes, export_regionTags
 
         if not self.recentlyVerified:
@@ -1297,6 +1313,7 @@ class EzroApp:
             sortByPrimaryRegion = self.sortByPrimaryRegionChoices[currIndex].get()
             primaryRegionInRoot = self.primaryRegionInRootChoices[currIndex].get()
             specialCategoryFolder = self.specialCategoryFolderChoices[currIndex].get()
+            letterFolder = self.letterFolderChoices[currIndex].get()
             overwriteDuplicates = self.overwriteDuplicatesChoices[currIndex].get()
             primaryRegions = []
             for i in range(len(export_regionGroupNames)):
@@ -1608,6 +1625,8 @@ class EzroApp:
             if specialCategoryFolder:
                 for folder in currSpecialFolders:
                     currGameFolder = path.join(currGameFolder, specialFolderPrefix+folder+specialFolderSuffix)
+            if letterFolder:
+                currGameFolder = path.join(currGameFolder, specialFolderPrefix+game[0]+specialFolderSuffix)
             if exportToGameParentFolder:
                 currGameFolder = path.join(currGameFolder, game)
             if romsetCategory in ["All", "Favorites"]:
@@ -1963,6 +1982,7 @@ class EzroApp:
             defaultSettings["Organization"]["Create Region Folders"] = self.ssch(self.g_sortByPrimaryRegion)
             defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = self.ssch(self.g_primaryRegionInRoot)
             defaultSettings["Organization"]["Create Folders for Special Categories"] = self.ssch(self.g_specialCategoryFolder)
+            defaultSettings["Organization"]["Create Letter Folders"] = self.ssch(self.g_letterFolder)
             defaultSettings["Organization"]["Overwrite Duplicate Files"] = self.ssch(self.g_overwriteDuplicates)
             defaultSettings["Include"] = {}
             for i in range(len(SpecialCategories)):
@@ -2049,6 +2069,7 @@ class EzroApp:
         defaultSettings["Organization"]["Create Region Folders"] = "False"
         defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] = "True"
         defaultSettings["Organization"]["Create Folders for Special Categories"] = "True"
+        defaultSettings["Organization"]["Create Letter Folders"] = "False"
         defaultSettings["Organization"]["Overwrite Duplicate Files"] = "False"
         defaultSettings["Include"] = {}
         for i in range(len(SpecialCategories)):
@@ -2075,6 +2096,7 @@ class EzroApp:
             self.g_sortByPrimaryRegion.set(defaultSettings["Organization"]["Create Region Folders"] == "True")
             self.g_primaryRegionInRoot.set(defaultSettings["Organization"]["Do Not Create Folder for Primary Region"] == "True")
             self.g_specialCategoryFolder.set(defaultSettings["Organization"]["Create Folders for Special Categories"] == "True")
+            self.g_letterFolder.set(defaultSettings["Organization"]["Create Letter Folders"] == "True")
             self.g_overwriteDuplicates.set(defaultSettings["Organization"]["Overwrite Duplicate Files"] == "True")
             for i in range(len(SpecialCategories)):
                 try:
