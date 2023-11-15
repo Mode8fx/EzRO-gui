@@ -45,7 +45,7 @@ Yes, you can do both of these by editing `SystemNames.py` (just follow the forma
 ### Can I add my own special categories in addition to the existing ones like Unlicensed and Unreleased?
 Yes. The categories are included in `SpecialCategories.py`, and you can edit them or add your own.
 ### What DAT files should I use?
-This program was designed for use with No-Intro's Parent-Clone DAT files. These can be found on No-Intro's DAT-o-MATIC, specifically the [Daily Downloads](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) page. Scroll down, select `P/C XML` in the dropdown, then click Prepare, then Download.
+This program was designed for use with No-Intro's Parent-Clone DAT files. These can be found on No-Intro's DAT-o-MATIC, specifically the [Daily Downloads](https://datomatic.no-intro.org/?page=download&op=daily) page. At the top of the page, select Type `P/C XML`, then click "Request". You should be taken to a Download page, which provides a full set of current DAT files. For NES, use the headerless DAT.
 ### Are disc-based systems supported?
 For the most part, no. Since there are many different methods of compressing (or not compressing) games from these systems, and because Redump DAT files are structured differently than No-Intro (and frankly, they contain less information), they are not supported at this time. This could change in the future, but don't count on it.
 ### Are arcade-based systems supported?
