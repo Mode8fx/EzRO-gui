@@ -3,13 +3,13 @@ import pygubu
 try:
     import Tkinter as tk
     import Tkinter.ttk as ttk
-    from Tkinter.messagebox import showinfo, showerror, askyesno
+    from Tkinter.messagebox import showinfo, showerror, askyesno, askokcancel
     from Tkinter import Toplevel
     from Tkinter.filedialog import askopenfilename, asksaveasfilename
 except:
     import tkinter as tk
     import tkinter.ttk as ttk
-    from tkinter.messagebox import showinfo, showerror, askyesno
+    from tkinter.messagebox import showinfo, showerror, askyesno, askokcancel
     from tkinter import Toplevel
     from tkinter.filedialog import askopenfilename, asksaveasfilename
 from Libraries.ttkScrollableNotebook.ScrollableNotebook import *
@@ -37,6 +37,7 @@ from dateutil.parser import parse as dateParse
 import binascii
 from time import sleep
 from datetime import datetime
+import webbrowser
 
 versionNum = 1.2
 
@@ -90,6 +91,7 @@ class EzroApp:
         helpMenu.add_separator()
         helpMenu.add_command(label="About...", command=self.menu_viewAbout)
         helpMenu.add_command(label="External Libraries...", command=self.menu_viewExternalLibraries)
+        helpMenu.add_command(label="Get No-Intro DAT Files...", command=self.menu_getDATFiles)
         menubar.add_cascade(label="Help", menu=helpMenu)
         tk_root.config(menu=menubar)
 
@@ -2112,6 +2114,11 @@ class EzroApp:
 
     def menu_viewExternalLibraries(self):
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")
+
+    def menu_getDATFiles(self):
+        confirmed = askokcancel("Get No-Intro DAT Files", "This will open the DAT-o-MATIC, where you can download DAT files.\n\nAt the top of the page, select the Type `P/C XML`, then click \"Request\". You should be taken to a Download page, which provides a full set of current DAT files.\n\nFor NES, use the headerless DAT.")
+        if confirmed:
+            webbrowser.open_new_tab("https://datomatic.no-intro.org/?page=download&op=daily")
 
 
 
