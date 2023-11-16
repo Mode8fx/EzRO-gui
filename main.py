@@ -1245,7 +1245,8 @@ class EzroApp:
         elif archiveExt == ".7z":
             with py7zr.SevenZipFile(archivePath, 'r') as zippedFile:
                 fileExt, newArchivePath, newExtractedFilePath = self.renameArchiveAndContent_ZIP_RAR_7Z(zippedFile, archivePath, archiveExt, newName)
-        patoolib.create_archive(newName+archiveExt, [newExtractedFilePath])
+        if not path.isfile(newArchivePath):
+            patoolib.create_archive(newArchivePath, [newExtractedFilePath])
         remove(archivePath)
         remove(newExtractedFilePath)
         self.writeTextToSubProgress("Renamed "+path.splitext(path.basename(archivePath))[0]+" to "+newName+"\n\n")
@@ -1602,6 +1603,16 @@ class EzroApp:
                 return True
         return False
 
+    def getFirstLetter(self, string):
+        strippedName = string.lstrip("\'").lstrip(".")
+        if len(strippedName) == 0:
+            return "!"
+        if strippedName[0].isalpha():
+            return strippedName[0].upper()
+        if strippedName[0].isnumeric():
+            return "0-9"
+        return strippedName[0]
+
     def copyMainRomset(self, currIndex):
         global gameRomDict, currGameFolder, romsetCategory, favoritesList, missingFavorites
         numGames = len(gameRomDict.keys())
@@ -1626,18 +1637,18 @@ class EzroApp:
                 for folder in currSpecialFolders:
                     currGameFolder = path.join(currGameFolder, specialFolderPrefix+folder+specialFolderSuffix)
             if letterFolder:
-                currGameFolder = path.join(currGameFolder, specialFolderPrefix+game[0]+specialFolderSuffix)
+                currGameFolder = path.join(currGameFolder, "<FIRSTLETTER>")
             if exportToGameParentFolder:
                 currGameFolder = path.join(currGameFolder, game)
             if romsetCategory in ["All", "Favorites"]:
                 for rom in gameRomDict[game]:
                     if romsetCategory == "All":
-                        self.copyRomToTarget(rom)
+                        self.copyRomToTarget(rom, game)
                     elif path.splitext(rom)[0] in favoritesList.keys():
-                        self.copyRomToTarget(rom)
+                        self.copyRomToTarget(rom, game)
                         favoritesList[path.splitext(rom)[0]] = True
             elif romsetCategory == "1G1R" or bestRegionIsPrimary:
-                self.copyRomToTarget(bestRom)
+                self.copyRomToTarget(bestRom, game)
             tk_root.update()
             if self.cancelledExport:
                 break
@@ -1659,29 +1670,37 @@ class EzroApp:
         self.createMainCopiedLog(currIndex, "Export" if self.isExport else "Test")
         return self.currNumCopiedBytes
 
-    def copyRomToTarget(self, rom):
+    def copyRomToTarget(self, rom, game):
+        global currGameFolder
+        if letterFolder:
+            if exportToGameParentFolder:
+                currGameFolderTemp = currGameFolder.replace("<FIRSTLETTER>", self.getFirstLetter(game))
+            else:
+                currGameFolderTemp = currGameFolder.replace("<FIRSTLETTER>", self.getFirstLetter(rom))
+        else:
+            currGameFolderTemp = currGameFolder
         sourceRomPath = path.join(currSystemSourceFolder, rom)
-        targetRomPath = path.join(currGameFolder, rom)
+        targetRomPath = path.join(currGameFolderTemp, rom)
         if overwriteDuplicates or (not self.targetExists(sourceRomPath, targetRomPath)):
             try:
-                createdFolder = self.isExport and createDir(currGameFolder)
+                createdFolder = self.isExport and createDir(currGameFolderTemp)
                 fileExt = path.splitext(sourceRomPath)[1]
                 if extractArchives and (fileExt in archiveTypes):
                     if fileExt == ".zip":
                         with zipfile.ZipFile(sourceRomPath, 'r', zipfile.ZIP_DEFLATED) as zippedFile:
                             if self.isExport:
-                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolderTemp)
                             self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
                     elif fileExt == ".rar":
                         with rarfile.RarFile(sourceRomPath, 'r') as zippedFile:
                             if self.isExport:
-                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolderTemp)
                             self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
                     elif fileExt == ".7z":
                         with py7zr.SevenZipFile(sourceRomPath, 'r') as zippedFile:
                             if self.isExport:
-                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolder)
-                            self.currNumCopiedBytes += zippedFile.infolist()[0].file_size
+                                patoolib.extract_archive(sourceRomPath, outdir=currGameFolderTemp)
+                            self.currNumCopiedBytes += zippedFile.list()[0].uncompressed
                 else:
                     if self.isExport:
                         shutil.copy(sourceRomPath, targetRomPath)
@@ -1691,8 +1710,8 @@ class EzroApp:
                 self.romsCopied.append(rom)
             except:
                 # progressBar.write("\nFailed to copy: "+rom)
-                if createdFolder and len(listdir(currGameFolder)) == 0:
-                    rmdir(currGameFolder)
+                if createdFolder and len(listdir(currGameFolderTemp)) == 0:
+                    rmdir(currGameFolderTemp)
                 self.romsFailed.append(rom)
         else:
             self.numRomsSkipped += 1
@@ -1709,7 +1728,7 @@ class EzroApp:
                 tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
         elif fileExt == ".7z":
             with py7zr.SevenZipFile(sourceRomPath, 'r') as zippedFile:
-                tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.namelist()[0])
+                tempTargetRomPath = path.join(path.dirname(targetRomPath), zippedFile.getnames()[0])
         return path.isfile(tempTargetRomPath)
 
     def getSpecialFolders(self, rom):
