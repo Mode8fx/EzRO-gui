@@ -1606,7 +1606,8 @@ class EzroApp:
         return strippedName[0]
 
     def copyMainRomset(self, currIndex):
-        global gameRomDict, currGameFolder, romsetCategory, favoritesList, missingFavorites
+        global gameRomDict, bestRegionForGame, currGameFolder, bestRegionIsPrimary
+        global romsetCategory, favoritesList, missingFavorites
         numGames = len(gameRomDict.keys())
         self.romsCopied = []
         self.numRomsSkipped = 0
@@ -1616,15 +1617,16 @@ class EzroApp:
         self.Export_SubProgress_Bar['value'] = 0
         for game in gameRomDict.keys():
             self.Export_SubProgress_Bar['value'] += 1
-            bestRom, bestRegion, bestRegionType = self.getBestRom(gameRomDict[game])
+            bestRom, bestRegionForGame, bestRegionType = self.getBestRom(gameRomDict[game])
             bestRegionIsPrimary = (bestRegionType == "Primary")
             currSpecialFolders = self.getSpecialFolders(bestRom)
             if arrayOverlap(currSpecialFolders, ignoredFolders):
                 continue
             # Start building output path according to attributes
             currGameFolder = currSystemTargetFolder
-            if sortByPrimaryRegion and (not (bestRegionIsPrimary and primaryRegionInRoot)):
-                currGameFolder = path.join(currGameFolder, specialFolderPrefix+bestRegion+specialFolderSuffix)
+            currGameFolder = path.join(currGameFolder, "<REGIONFOLDER>")
+            # if sortByPrimaryRegion and (not (bestRegionIsPrimary and primaryRegionInRoot)):
+            #     currGameFolder = path.join(currGameFolder, specialFolderPrefix+bestRegionForGame+specialFolderSuffix)
             if specialCategoryFolder:
                 for folder in currSpecialFolders:
                     currGameFolder = path.join(currGameFolder, specialFolderPrefix+folder+specialFolderSuffix)
@@ -1662,15 +1664,44 @@ class EzroApp:
         self.createMainCopiedLog(currIndex, "Export" if self.isExport else "Test")
         return self.currNumCopiedBytes
 
+    # lazy copy/paste job, but it works
+    def getRomRegion(self, rom):
+        bestRegionIndex = 99
+        bestRegion = None
+        bestRegionType = 0
+        attributeSplit = self.getAttributeSplit(rom)
+        for i in range(len(export_regionGroupNames)):
+            region = export_regionGroupNames[i]
+            currRegionAtts = self.commaSplit(export_regionTags[i])
+            regionType = (2 if export_regionPriorityTypes[i]=="Primary" else 1)
+            if arrayOverlap(attributeSplit, currRegionAtts) or i==len(export_regionGroupNames)-1:
+                if regionType >= bestRegionType:
+                    if i < bestRegionIndex or regionType > bestRegionType:
+                        bestRegionIndex = i
+                        bestRegion = region
+                        bestRegionType = regionType
+                    if regionType == 2:
+                        break
+        # bestRegionType = (None, "Secondary", "Primary")[bestRegionType]
+        return bestRegion, bestRegionType
+
     def copyRomToTarget(self, rom, game):
         global currGameFolder
+        currGameFolderTemp = currGameFolder.replace("\\", "/")
+        if sortByPrimaryRegion:
+            if exportToGameParentFolder:
+                if not (bestRegionIsPrimary and primaryRegionInRoot):
+                    currGameFolderTemp = currGameFolderTemp.replace("<REGIONFOLDER>", specialFolderPrefix+bestRegionForGame+specialFolderSuffix)
+            else:
+                bestRegionForRom, bestRegionType = self.getRomRegion(rom)
+                if bestRegionType < 2:
+                    currGameFolderTemp = currGameFolderTemp.replace("<REGIONFOLDER>", specialFolderPrefix+bestRegionForRom+specialFolderSuffix)
+        currGameFolderTemp = currGameFolderTemp.replace("/<REGIONFOLDER>", "/")
         if letterFolder:
             if exportToGameParentFolder:
-                currGameFolderTemp = currGameFolder.replace("<FIRSTLETTER>", self.getFirstLetter(game))
+                currGameFolderTemp = currGameFolderTemp.replace("<FIRSTLETTER>", self.getFirstLetter(game))
             else:
-                currGameFolderTemp = currGameFolder.replace("<FIRSTLETTER>", self.getFirstLetter(rom))
-        else:
-            currGameFolderTemp = currGameFolder
+                currGameFolderTemp = currGameFolderTemp.replace("<FIRSTLETTER>", self.getFirstLetter(rom))
         sourceRomPath = path.join(currSystemSourceFolder, rom)
         targetRomPath = path.join(currGameFolderTemp, rom)
         if overwriteDuplicates or (not self.targetExists(sourceRomPath, targetRomPath)):
