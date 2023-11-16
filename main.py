@@ -557,27 +557,18 @@ class EzroApp:
                     return
 
     def ssdHelper(self, name):
-        currSystemDAT = path.join(self.g_datFilePath.get(), name+".dat").replace("\\", "/")
+        datDir = self.g_datFilePath.get()
+        currSystemDAT = path.join(datDir, name+".dat").replace("\\", "/")
         if path.isfile(currSystemDAT):
             self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
             return True
-        if " - " in name:
-            currSystemDAT = path.join(self.g_datFilePath.get(), name.replace(" - ", " ")+".dat").replace("\\", "/")
-            if path.isfile(currSystemDAT):
-                self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
-                return True
-        if path.isdir(self.g_datFilePath.get()):
-            for df in listdir(self.g_datFilePath.get()):
-                try:
-                    currSystemDAT = path.join(self.g_datFilePath.get(), df).replace("\\", "/")
-                    fileName, fileExt = path.splitext(df)
-                    assert fileExt == ".dat"
-                    fileTimestamp = df.replace(name, "").strip()
-                    assert datetime.strptime(df, name+" (%Y%m%d-%H%M%S).dat") is not None
+        if path.isdir(datDir):
+            expectedName = currSystemDAT.lower()
+            for df in listdir(datDir):
+                currSystemDAT = path.join(datDir, df).replace("\\", "/")
+                if re.sub(r'\s*\([^)]*\)', '', currSystemDAT).lower() == expectedName:
                     self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
                     return True
-                except:
-                    pass
         return False
 
     def setInputRomsetDir(self, systemName, romsetFolderPath):
