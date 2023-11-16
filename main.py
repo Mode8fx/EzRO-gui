@@ -233,7 +233,7 @@ class EzroApp:
         self.Config_Default_SortByPrimaryRegion.place(anchor='nw', relx='.651', rely='.234', x='0', y='0')
         self.Config_Default_PrimaryRegionInRoot = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_primaryRegionInRoot = tk.IntVar(value=False)
-        self.Config_Default_PrimaryRegionInRoot.configure(text='Do Not Create Folder for Primary Region', variable=self.g_primaryRegionInRoot)
+        self.Config_Default_PrimaryRegionInRoot.configure(text='Do Not Create Folder for Primary Regions', variable=self.g_primaryRegionInRoot)
         self.Config_Default_PrimaryRegionInRoot.place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
         self.Config_Default_SpecialCategoryFolder = ttk.Checkbutton(self.Config_Default_Frame)
         self.g_specialCategoryFolder = tk.IntVar(value=False)
@@ -498,7 +498,7 @@ class EzroApp:
         self.Export_SortByPrimaryRegion_[self.exportTabNum].configure(command=self.export_togglePrimaryRegionInRoot)
         self.Export_PrimaryRegionInRoot_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.primaryRegionInRootChoices.append(tk.IntVar(value=primaryRegionInRoot))
-        self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Do Not Create Folder for Primary Region', variable=self.primaryRegionInRootChoices[self.exportTabNum])
+        self.Export_PrimaryRegionInRoot_[self.exportTabNum].configure(text='Do Not Create Folder for Primary Regions', variable=self.primaryRegionInRootChoices[self.exportTabNum])
         self.Export_PrimaryRegionInRoot_[self.exportTabNum].place(anchor='nw', relx='.651', rely='.336', x='0', y='0')
         self.Export_SpecialCategoryFolder_.append(ttk.Checkbutton(self.Export_ScrolledFrame_[self.exportTabNum].innerframe))
         self.specialCategoryFolderChoices.append(tk.IntVar(value=specialCategoryFolder))
@@ -564,9 +564,10 @@ class EzroApp:
             return True
         if path.isdir(datDir):
             expectedName = currSystemDAT.lower()
+            parenthesesKeeper = r'\1' if "(" in name else ''
             for df in listdir(datDir):
                 currSystemDAT = path.join(datDir, df).replace("\\", "/")
-                if re.sub(r'\s*\([^)]*\)', '', currSystemDAT).lower() == expectedName:
+                if re.sub(r'(\s*\([^)]*\)).*', parenthesesKeeper, currSystemDAT).lower()+".dat" == expectedName:
                     self.datFilePathChoices[self.exportTabNum].set(currSystemDAT)
                     return True
         return False
