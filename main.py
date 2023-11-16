@@ -39,7 +39,7 @@ from time import sleep
 from datetime import datetime
 import webbrowser
 
-versionNum = 1.2
+versionNum = 1.21
 
 archiveTypes = [".zip", ".rar", ".7z"]
 
