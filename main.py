@@ -39,7 +39,7 @@ from time import sleep
 from datetime import datetime
 import webbrowser
 
-versionNum = 1.21
+versionNum = 1.22
 
 archiveTypes = [".zip", ".rar", ".7z"]
 
@@ -2174,7 +2174,7 @@ class EzroApp:
         showinfo("Help", "Hover over certain options for further details about them. You can also click the \"?\" button on some pages for more information.")
 
     def menu_viewAbout(self):
-        showinfo("About", "EzRO Rom Organizer v"+str(versionNum)+"\nhttps://github.com/Mips96/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
+        showinfo("About", "EzRO Rom Organizer v"+str(versionNum)+"\nhttps://github.com/Mode8fx/EzRO-gui\n\nQuestions? Bug reports? Feel free to leave an issue on the project GitHub!")
 
     def menu_viewExternalLibraries(self):
         showinfo("External Libraries", "ttkScrollableNotebook\nhttps://github.com/muhammeteminturgut/ttkScrollableNotebook\nLicensed under GPL-3.0")

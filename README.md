@@ -4,7 +4,7 @@ EzRO is a GUI-based rom organizer that allows you to export your local romsets i
  
 By providing a [No-Intro](https://datomatic.no-intro.org/) Parent-Clone DAT file for each system, you can take a local romset (full or partial) and export a curated copy; you can convert a full set into 1G1R for your region, group different releases of a single game together into one folder, automatically unzip roms for emulators that don’t support zipped roms, and more.
 
-<img src="https://github.com/Mips96/EzRO-gui/blob/main/screenshots/screenshot%201.png" />
+<img src="https://github.com/Mode8fx/EzRO-gui/blob/main/screenshots/screenshot%201.png" />
 
 ## Features
 
@@ -51,7 +51,7 @@ For the most part, no. Since there are many different methods of compressing (or
 ### Are arcade-based systems supported?
 No. For that, you're *much* better off using something like [Clrmamepro](https://mamedev.emulab.it/clrmamepro/) instead.
 ### I have a feature request/bug report!
-Leave an [issue](https://github.com/Mips96/EzRO-gui/issues) and I’ll look into it.
+Leave an [issue](https://github.com/Mode8fx/EzRO-gui/issues) and I’ll look into it.
 
 ## Example Output
 

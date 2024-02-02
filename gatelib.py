@@ -331,7 +331,7 @@ def writeToAddress(file, address, val, numBytes=1, isLittleEndian=False):
 def swapEndianness(num, numBytes):
 	num2 = 0
 	for i in range(1, numBytes + 1):
-	    num2 += (num>>(8*(i-1)) & 0xFF)*(256**(numBytes - i))
+		num2 += (num>>(8*(i-1)) & 0xFF)*(256**(numBytes - i))
 	return num2
 
 """
