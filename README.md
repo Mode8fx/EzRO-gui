@@ -94,5 +94,8 @@ F:/Roms/Sega Genesis/[Japan]/My Game 3/My Game 3 (Japan).zip
 F:/Roms/Sega Genesis/[Other (non-English)]/My Game 4/My Game 4 (China).zip
 ```
 
+## Credits/Compilation
+In addition to the Python libraries shown in [requirements.txt](https://github.com/Mode8fx/EzRO-gui/blob/main/requirements.txt), EzRO also uses [ttkScrollableNotebook by muhammeteminturgut](https://github.com/muhammeteminturgut/ttkScrollableNotebook). This library and its license have been included in the release version of EzRO.
+
 ## Legal Disclaimer
 This is not a rom downloader, nor does it include any information on how to obtain roms. You are responsible for legally obtaining your own roms for use with this program.
