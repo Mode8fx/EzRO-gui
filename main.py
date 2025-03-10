@@ -1766,6 +1766,8 @@ class EzroApp:
 
     def createMainCopiedLog(self, currIndex, logType="Export"):
         currTime = datetime.now().isoformat(timespec='seconds').replace(":", ".")
+        if not path.exists(logFolder):
+            mkdir(logFolder)
         if len(self.romsCopied) + len(self.romsFailed) > 0:
             self.romsCopied.sort()
             self.romsFailed.sort()
