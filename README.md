@@ -50,6 +50,15 @@ This program was designed for use with No-Intro's Parent-Clone DAT files. These 
 For the most part, no. Since there are many different methods of compressing (or not compressing) games from these systems, and because Redump DAT files are structured differently than No-Intro (and frankly, they contain less information), they are not supported at this time. This could change in the future, but don't count on it.
 ### Are arcade-based systems supported?
 No. For that, you're *much* better off using something like [Clrmamepro](https://mamedev.emulab.it/clrmamepro/) instead.
+
+## Troubleshooting
+
+### My NES roms are all being skipped!
+Try using the unheadered DAT.
+
+### My system DAT isn't being recognized!
+No-Intro may have changed the name of the system since EzRO was last updated. You can either edit `SystemNames.py` to change the identifiable system names (recommended) or change the name within the DAT itself.
+
 ### I have a feature request/bug report!
 Leave an [issue](https://github.com/Mode8fx/EzRO-gui/issues) and I’ll look into it.
 
