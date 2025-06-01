@@ -54,7 +54,7 @@ No. For that, you're *much* better off using something like [Clrmamepro](https:/
 ## Troubleshooting
 
 ### My NES roms are all being skipped!
-Try using the unheadered DAT.
+Try using the headerless DAT.
 
 ### My system DAT isn't being recognized!
 No-Intro may have changed the name of the system since EzRO was last updated. You can either edit `SystemNames.py` to change the identifiable system names (recommended) or change the name within the DAT itself.
