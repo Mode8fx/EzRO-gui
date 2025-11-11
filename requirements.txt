@@ -1,4 +1,4 @@
-Brotli==1.1.0
+Brotli==1.2.0
 filehash==0.2.dev1
 inflate64==1.0.0
 multivolumefile==0.2.3
